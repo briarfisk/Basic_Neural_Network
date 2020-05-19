@@ -1,22 +1,41 @@
-// NT3_Basic_Neural_Network.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+#define OLC_PGE_APPLICATION
+#include "olcPixelGameEngine.h"
+#include "NT3_Master.h"
 
-#include <iostream>
+class Example : public olc::PixelGameEngine
+{
+public:
 
-#include "c_NT3_Basic_Neural_Network.h"
+	
+
+	Example()
+	{
+		sAppName = "Example";
+	}
+
+public:
+	bool OnUserCreate() override
+	{
+		// Called once at the start, so create things here
+		return true;
+	}
+
+	bool OnUserUpdate(float fElapsedTime) override
+	{
+		// called once per frame
+		for (int x = 0; x < ScreenWidth(); x++)
+			for (int y = 0; y < ScreenHeight(); y++)
+				Draw(x, y, olc::Pixel(rand() % 255, rand() % 255, rand() % 255));
+		return true;
+	}
+};
+
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	Example demo;
+	if (demo.Construct(256, 240, 4, 4))
+		demo.Start();
+
+	return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
