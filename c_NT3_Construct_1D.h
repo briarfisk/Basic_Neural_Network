@@ -130,6 +130,10 @@ public:
      
      //Whether or not the RC is being evaluated.
      int sauto_Use_RC;
+
+
+     //The pixel game engine object 
+     olc::PixelGameEngine* PGE;
      
      c_NT3_Construct_1D()
      {
@@ -178,6 +182,8 @@ public:
           
           sauto_Use_RC = 0;
           sauto_Type = 0;
+
+          PGE = NULL;
      }
      
      ~c_NT3_Construct_1D()
@@ -188,6 +194,13 @@ public:
           Charging_Buffers = NULL;
           Input_Depth = 0;
           std::cout << "\n  ~~~c_NT3_Construct_1D " << Name << " " << this << ".........."; std::cout.flush();
+     }
+
+     //Sets the Pixel game engine object reference.
+     void set_PGE(olc::PixelGameEngine* p_PGE)
+     {
+         PGE = p_PGE;
+         Nodes.set_PGE(p_PGE);
      }
      
      //Sets the name of the construct and the tables.
@@ -798,17 +811,32 @@ public:
      //==--   BUILDING FUNCTIONS
      ////==-----------------------+
      
+     bool is_CAN_Idle()
+     {
+         return CAN.flg_Is_Idle;
+     }
+
      //Builds full CAN.
      void Build()
      {
-          if (tbl_Input.Number_Of_Rows == 0){ return; }
-          
-          tbl_Treetops.reset();
-          
-          for (int cou_Cell=0;cou_Cell<tbl_Input.Rows[0]->Depth;cou_Cell++)
-          {
-               Build_Input(cou_Cell);
-          }
+         if (tbl_Input.Number_Of_Rows == 0) { return; }
+
+         tbl_Treetops.reset();
+
+         for (int cou_Cell = 0; cou_Cell < tbl_Input.Rows[0]->Depth; cou_Cell++)
+         {
+             Build_Input(cou_Cell);
+         }
+     }
+
+     //Starts the setup for the CAN slowbuild.
+     void Start_Build_Stepping()
+     {
+         if (tbl_Input.Number_Of_Rows == 0) { return; }
+
+         tbl_Treetops.reset();
+
+         build_Input_Step_Setup(0);
      }
      
      //Builds RC CAN.
@@ -844,6 +872,21 @@ public:
           CAN.Full();
           if (CAN.Treetop == NULL){ tbl_Treetops.add_Int(Current_Input, 0); return; }
           tbl_Treetops.add_Int(Current_Input, (CAN.Treetop->NID.U + 1));
+     }
+
+     bool build_Input_Step_Setup(int p_Cell = 0)
+     {
+         gather_CAN_Input(0, p_Cell);
+         CAN.Full();
+         if (CAN.Treetop == NULL) { tbl_Treetops.add_Int(Current_Input, 0); return 1; }
+         tbl_Treetops.add_Int(Current_Input, (CAN.Treetop->NID.U + 1));
+         return CAN.flg_Is_Idle;
+     }
+
+     //Steps the build input.
+     bool Build_Step(int p_Cell = 0)
+     {
+         return CAN.build_Tiers_Full_Step();
      }
      
      //Builds RC CAN.

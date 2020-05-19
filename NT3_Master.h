@@ -12,7 +12,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <math.h>
-
+#include <chrono>
+#include <thread>
 
 #include "olcPixelGameEngine.h"
 

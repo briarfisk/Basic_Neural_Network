@@ -21,21 +21,38 @@ public:
 	{
 		// Called once at the start, so create things here
 		olc::NT3::init_LoTd();
+		Conman.set_PGE(this);
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		std::cout << "\n\n ->";
-		getline(std::cin, Input);
-		Conman.in(0, 0, Input);
-		Conman.Build();
-		//Conman.output_Nodes_Raw();
+		if (Conman.is_CAN_Idle())
+		{
+			std::string tmp_Input = "";
+			Input = "";
+			std::cout << "\n\n ->";
+			//getline(std::cin, Input);
+			std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
+			std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
+			std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
+			std::cout << "\n\n Input string ->" << Input << "<-";
 
-		Conman.output_Nodes_Stats();
+			if (Input.size() > 1) 
+			{
+				Conman.reset_Inputs();
+				Conman.in(0, 0, Input);
+				Conman.Start_Build_Stepping();
+				//Conman.output_Nodes_Raw();
 
-		Conman.output_Nodes_GUI(this);
+				Conman.output_Nodes_Stats();
+			}
 
+		}
+		else
+		{
+			Conman.Build_Step();
+		}
 		return true;
 	}
 };
@@ -44,7 +61,7 @@ public:
 int main()
 {
 	Example demo;
-	if (demo.Construct(1000, 1000, 1, 1))
+	if (demo.Construct(1500, 1000, 1, 1))
 		demo.Start();
 
 	return 0;
