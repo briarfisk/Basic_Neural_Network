@@ -36,6 +36,10 @@ public:
      //The position used by the GUI.
      int X;
      int Y;
+
+     //The padding for the output.
+     int X_Padd;
+     int Y_Padd;
      
      //Member Functions.
      virtual void add_Axon_L(c_NT3_Base_Node_1D * p_Axon)=0; //Adds an axon on the left leg.
@@ -69,6 +73,7 @@ public:
      virtual void bp_L()=0; //bp_Output the left node.
      virtual void bp_R()=0; //bp_Output the right node.
 
+     virtual void set_Padding(int p_X_Padd, int p_Y_Padd)=0;
      virtual void output_GUI(olc::PixelGameEngine* pge)=0;
 };
 
@@ -100,6 +105,11 @@ public:
           Type = 1;
           
           Ref = NULL;
+
+          X = 0;
+          Y = 0;
+          X_Padd = 2;
+          Y_Padd = 75;
      }
      
      ~c_NT3_Node_1D()
@@ -362,18 +372,28 @@ public:
           }
      }
 
+     void set_Padding(int p_X_Padd, int p_Y_Padd)
+     {
+         X_Padd = p_X_Padd;
+         Y_Padd = p_Y_Padd;
+     }
+     
      //Outputs the node graphically based on XY through the olcPGE library.
      void output_GUI(olc::PixelGameEngine* pge)
      {
-         pge->Draw((X * 5), (Y * 15));
+         pge->Draw((X * X_Padd), (Y * Y_Padd));
 
          if (Dendrite_L != NULL)
          {
-             pge->DrawLine((X * 5), (Y * 15), (Dendrite_L->X * 5), (Dendrite_L->Y * 15));
+             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_L->X * X_Padd), (Dendrite_L->Y * Y_Padd), olc::BLUE);
          }
          if (Dendrite_R != NULL)
          {
+<<<<<<< Updated upstream
              pge->DrawLine((X * 5), (Y * 15), (Dendrite_R->X * 5), (Dendrite_R->Y * 15));
+=======
+             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_R->X * X_Padd), (Dendrite_R->Y * Y_Padd), olc::RED);
+>>>>>>> Stashed changes
          }
      }
 };
@@ -413,6 +433,11 @@ public:
           Type = 0;
           
           Ref = NULL;
+
+          X = 0;
+          Y = 0;
+          X_Padd = 2;
+          Y_Padd = 75;
      }
      
      ~c_NT3_State_Node_1D()
@@ -668,19 +693,26 @@ public:
           }
      }
 
+     void set_Padding(int p_X_Padd, int p_Y_Padd)
+     {
+         X_Padd = p_X_Padd;
+         Y_Padd = p_Y_Padd;
+     }
+
+
      //Outputs the node graphically based on XY through the olcPGE library.
      void output_GUI(olc::PixelGameEngine* pge)
      {
-         pge->Draw((X * 5), (Y * 15));
+         pge->Draw((X * X_Padd), (Y * Y_Padd));
 
          for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
          {
-             pge->DrawLine((X * 5), (Y * 15), (Axons_L[cou_AL]->X * 5), (Axons_L[cou_AL]->Y * 15));
+             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Axons_L[cou_AL]->X * X_Padd), (Axons_L[cou_AL]->Y * Y_Padd), olc::BLUE);
          }
 
          for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
          {
-             pge->DrawLine((X * 5), (Y * 15), (Axons_R[cou_AR]->X * 5), (Axons_R[cou_AR]->Y * 15));
+             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Axons_R[cou_AR]->X * X_Padd), (Axons_R[cou_AR]->Y * Y_Padd), olc::RED);
          }
 
      }

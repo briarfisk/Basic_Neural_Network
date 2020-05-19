@@ -133,7 +133,7 @@ public:
      //Builds the Tiers full with tracking vars rather than a for loop. Allows for stepping through.
      bool build_Tiers_Full_Step()
      {
-         std::cout << "\n btfs: " << Current_Fill_Tier << ", " << Current_Fill_Index;
+         //std::cout << "\n btfs: " << Current_Fill_Tier << ", " << Current_Fill_Index;
 
          if (Current_Fill_Tier < (Number_Of_Tiers - 2))
          {
