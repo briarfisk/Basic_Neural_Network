@@ -33,10 +33,10 @@ public:
 			Input = "";
 			std::cout << "\n\n ->";
 			//getline(std::cin, Input);
-			std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
-			std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
-			std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
-			std::cout << "\n\n Input string ->" << Input << "<-";
+			for (int cou_Index = 0; cou_Index < 1; cou_Index++)
+			{
+				std::cin >> tmp_Input; Input += " " + tmp_Input; tmp_Input = "";
+			}
 
 			if (Input.size() > 1) 
 			{
@@ -46,6 +46,10 @@ public:
 				//Conman.output_Nodes_Raw();
 
 				Conman.output_Nodes_Stats();
+
+				std::cout << "\n\n Current Input string:\n__________\n";
+				olc::NT3::ostr(0, 14, Input);
+				std::cout << "\n__________\n";
 			}
 
 		}
