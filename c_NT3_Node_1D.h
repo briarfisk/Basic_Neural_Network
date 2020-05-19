@@ -1,3 +1,5 @@
+#include "olcPixelGameEngine.h"
+
 //The basic polymorphic node to use for the node network.
 class c_NT3_Base_Node_1D
 {
@@ -30,6 +32,10 @@ public:
      
      //This is used for things such as the buffer trees or anything that relies on references.
      void * Ref;
+
+     //The position used by the GUI.
+     int X;
+     int Y;
      
      //Member Functions.
      virtual void add_Axon_L(c_NT3_Base_Node_1D * p_Axon)=0; //Adds an axon on the left leg.
@@ -62,6 +68,8 @@ public:
      virtual void bp_O()=0; //Initiates a backpropagation that outputs to the given table with the given index.
      virtual void bp_L()=0; //bp_Output the left node.
      virtual void bp_R()=0; //bp_Output the right node.
+
+     virtual void output_GUI(olc::PixelGameEngine* pge)=0;
 };
 
 //The normal node to use.
@@ -353,6 +361,12 @@ public:
                     std::cout << tmp_State;
           }
      }
+
+     //Outputs the node graphically based on XY through the olcPGE library.
+     void output_GUI(olc::PixelGameEngine* pge)
+     {
+         pge->Draw((X * 5), (Y * 5));
+     }
 };
 
 //State node.
@@ -643,6 +657,12 @@ public:
                if (tmp_State == char (13)){ tmp_State = '?'; }
                std::cout << tmp_State;
           }
+     }
+
+     //Outputs the node graphically based on XY through the olcPGE library.
+     void output_GUI(olc::PixelGameEngine* pge)
+     {
+         pge->Draw((X * 5), (Y * 5));
      }
 };
 

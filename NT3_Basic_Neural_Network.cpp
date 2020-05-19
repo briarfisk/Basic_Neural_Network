@@ -1,4 +1,6 @@
 #define OLC_PGE_APPLICATION
+//#define OLC_PGEX_NT3
+
 #include "olcPixelGameEngine.h"
 #include "NT3_Master.h"
 
@@ -6,7 +8,8 @@ class Example : public olc::PixelGameEngine
 {
 public:
 
-	
+	olc::NT3::c_NT3_Construct_1D Conman;
+	std::string Input;
 
 	Example()
 	{
@@ -17,15 +20,21 @@ public:
 	bool OnUserCreate() override
 	{
 		// Called once at the start, so create things here
+		olc::NT3::init_LoTd();
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		// called once per frame
-		for (int x = 0; x < ScreenWidth(); x++)
-			for (int y = 0; y < ScreenHeight(); y++)
-				Draw(x, y, olc::Pixel(rand() % 255, rand() % 255, rand() % 255));
+		getline(std::cin, Input);
+		Conman.in(0, 0, Input);
+		Conman.Build();
+		//Conman.output_Nodes_Raw();
+
+		Conman.output_Nodes_Stats();
+
+		Conman.output_Nodes_GUI(this);
+
 		return true;
 	}
 };
@@ -34,7 +43,7 @@ public:
 int main()
 {
 	Example demo;
-	if (demo.Construct(256, 240, 4, 4))
+	if (demo.Construct(1000, 1000, 1, 1))
 		demo.Start();
 
 	return 0;

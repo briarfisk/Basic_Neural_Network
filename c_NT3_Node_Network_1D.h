@@ -1,4 +1,4 @@
-
+#include "olcPixelGameEngine.h"
 
 //The node network that handles the nodes.
 class c_NT3_Node_Network_1D
@@ -25,12 +25,20 @@ public:
      //Tree to track the nodes and their IDs.
      //Only used during saving and loading, then it is destroyed to save memory.
      c_NT3_Fractal_State_Tree NID_Tree;
+
+     int Highest_Tier;
+     int Tier_Count[1000];
      
      c_NT3_Node_Network_1D()
      {
           CNID.I = 0;
           Root = NULL;
           Current_Node = &Root;
+          Highest_Tier = 0;
+          for (int cou_Index = 0; cou_Index < 1000; cou_Index++)
+          {
+              Tier_Count[cou_Index] = 0;
+          }
      }
      
      ~c_NT3_Node_Network_1D()
@@ -69,7 +77,7 @@ public:
      ////==------------------+
      
      //Creates a new state node.
-     c_NT3_Base_Node_1D * new_State_Node(u_Data_3 p_State, int p_A_L = 0, int p_A_R = 0)
+     c_NT3_Base_Node_1D * new_State_Node(u_Data_3 p_State, int p_Tier, int p_A_L = 0, int p_A_R = 0)
      {
           //Create the state node.
           *Current_Node = new c_NT3_State_Node_1D;
@@ -89,6 +97,13 @@ public:
           
           //Set the current nodes state.
           (*Current_Node)->set_State(p_State);
+
+          //Set the XY
+          (*Current_Node)->X = Tier_Count[p_Tier];
+          (*Current_Node)->Y = p_Tier;
+
+          Tier_Count[p_Tier]++;
+          if (Highest_Tier <= p_Tier) { Highest_Tier = p_Tier + 1; }
           
           //Set the Current node to the next one in the chain.
           Current_Node = &(*Current_Node)->Next;
@@ -98,7 +113,7 @@ public:
      }
      
      //Creates a new node.
-     c_NT3_Base_Node_1D * new_Node(int p_A_L = 0, int p_A_R = 0)
+     c_NT3_Base_Node_1D * new_Node(int p_Tier, int p_A_L = 0, int p_A_R = 0)
      {
           //A tmp Node because we iterate the Current_Node.
           c_NT3_Base_Node_1D * tmp_Return_Node;
@@ -116,10 +131,17 @@ public:
           //If axon std::couts are given expand the axon arrays.
           if (p_A_L){ (*Current_Node)->expand_Axon_L(p_A_L); }
           if (p_A_R){ (*Current_Node)->expand_Axon_R(p_A_R); }
-          
+
+          //Set the XY
+          (*Current_Node)->X = Tier_Count[p_Tier];
+          (*Current_Node)->Y = p_Tier;
+
+          Tier_Count[p_Tier]++;
+          if (Highest_Tier <= p_Tier) { Highest_Tier = p_Tier + 1; }
+
           //Set the Current node to the next one in the chain.
           Current_Node = &(*Current_Node)->Next;
-          
+
           //Return the node that was created.
           return tmp_Return_Node;
      }
@@ -188,7 +210,7 @@ public:
      ////==---------------------+
      
      //Assigns a given node to a state, used for loading.
-     c_NT3_Base_Node_1D * assign_State_Node(u_Data_3 p_State, c_NT3_Base_Node_1D * p_Node, int p_A_L = 0, int p_A_R = 0)
+     c_NT3_Base_Node_1D * assign_State_Node(u_Data_3 p_State, c_NT3_Base_Node_1D * p_Node, int p_Tier, int p_A_L = 0, int p_A_R = 0)
      {
           //Search for the node.
           State_Tree.search(p_State);
@@ -196,7 +218,7 @@ public:
           //If the node has not been found then create it.
           if (State_Tree.get_Current_Node_NID() == NULL)
           {
-               new_State_Node(p_State, p_A_L, p_A_R);
+               new_State_Node(p_State, p_Tier, p_A_L, p_A_R);
           }
           
           //Return the current node NID.
@@ -204,7 +226,7 @@ public:
      }
      
      //Get a state node.
-     c_NT3_Base_Node_1D * get_State_Node(u_Data_3 p_State, int p_A_L = 0, int p_A_R = 0)
+     c_NT3_Base_Node_1D * get_State_Node(u_Data_3 p_State, int p_Tier = 0, int p_A_L = 0, int p_A_R = 0)
      {
           //Search for the node.
           State_Tree.search(p_State);
@@ -212,7 +234,7 @@ public:
           //If the node has not been found then create it.
           if (State_Tree.get_Current_Node_NID() == NULL)
           {
-               new_State_Node(p_State, p_A_L, p_A_R);
+               new_State_Node(p_State, p_Tier, p_A_L, p_A_R);
           }
           
           //Return the current node NID.
@@ -230,7 +252,7 @@ public:
      }
      
      //Gets an upper tier connection even if one has to be created.
-     c_NT3_Base_Node_1D * get_Upper_Tier_Connection(c_NT3_Base_Node_1D * p_L, c_NT3_Base_Node_1D * p_R)
+     c_NT3_Base_Node_1D * get_Upper_Tier_Connection(c_NT3_Base_Node_1D * p_L, c_NT3_Base_Node_1D * p_R, int p_Tier)
      {
           //If either submitted node is NULL then return NULL.
           if (p_L == NULL || p_R == NULL){ return NULL; }
@@ -246,7 +268,7 @@ public:
           }
           
           //If one does not exist then create it.
-          tmp_Node = new_Node();
+          tmp_Node = new_Node(p_Tier);
           
           tmp_Node->set_Dendrite_L(p_L);
           tmp_Node->set_Dendrite_R(p_R);
@@ -258,9 +280,9 @@ public:
      }
      
      //Gets a treetop connection.
-     c_NT3_Base_Node_1D * get_Treetop_Connection(c_NT3_Base_Node_1D * p_L, c_NT3_Base_Node_1D * p_R)
+     c_NT3_Base_Node_1D * get_Treetop_Connection(c_NT3_Base_Node_1D * p_L, c_NT3_Base_Node_1D * p_R, int p_Tier)
      {
-          c_NT3_Base_Node_1D * tmp_Node = get_Upper_Tier_Connection(p_L, p_R);
+          c_NT3_Base_Node_1D * tmp_Node = get_Upper_Tier_Connection(p_L, p_R, p_Tier);
           
           convert_To_Treetop_Node(tmp_Node);
           
@@ -407,11 +429,11 @@ public:
      }
      
      ////==---------------------------------+
-     //==--   SAVING AND LOADING FUNCTIONS
+     //==--   SAVING AND LOADING FUNCTIONS - BROKEN ATM, PASSES INVALID TIER, DOESN'T SAVE AND LOAD (X, Y)
      ////==---------------------------------+
      
      //Saves the node network.
-     void save(ofstream * p_SF)
+     void save(std::ofstream * p_SF)
      {
           //Create the file.
           std::cout << "\n\n Node Network Saving..........";
@@ -469,7 +491,7 @@ public:
      }
      
      //Loads the node network.
-     void load_O(ifstream * p_LF)
+     void load_O(std::ifstream * p_LF)
      {
           //Create the file.
           std::cout << "\n\n Node Network Loading..........";
@@ -484,7 +506,7 @@ public:
           c_NT3_Base_Node_1D * tmp_D_L = NULL;
           c_NT3_Base_Node_1D * tmp_D_R = NULL;
           
-          string tmp_Node_Type = "";
+          std::string tmp_Node_Type = "";
           u_Data_3 tmp_State;
           tmp_State.I = 0;
           u_Data_3 tmp_NID;
@@ -545,7 +567,7 @@ public:
                     //*std::cout << " R " << tmp_R.I;
                     
                     //Create the node and add it to the state tree with the NID as an identifier.
-                    tmp_Node = new_Node();
+                    tmp_Node = new_Node(0);
                     tmp_Scaffold.search(tmp_NID);
                     tmp_Scaffold.set_Current_Node_NID(tmp_Node);
                     
@@ -595,7 +617,7 @@ public:
                     //*std::cout << " R " << tmp_R.I;
                     
                     //Create the node and add it to the state tree with the NID as an identifier.
-                    tmp_Node = new_Node();
+                    tmp_Node = new_Node(0);
                     tmp_Scaffold.search(tmp_NID);
                     tmp_Scaffold.set_Current_Node_NID(tmp_Node);
                     convert_To_Treetop_Node(tmp_Node);
@@ -636,7 +658,7 @@ public:
      
      
      //Loads the node network, new faster method, dendrites only.
-     void load(ifstream * p_LF)
+     void load(std::ifstream * p_LF)
      {
           //Create the file.
           std::cout << "\n\n Node Network Loading..........";
@@ -650,7 +672,7 @@ public:
           
           c_NT3_Base_Node_1D * tmp_Node = NULL;
           
-          string tmp_Node_Type = "";
+          std::string tmp_Node_Type = "";
           
           u_Data_3 tmp_State;
           tmp_State.I = 0;
@@ -850,24 +872,69 @@ public:
      {
           Treetops_Tree.output_Tree_BP();
      }
-     
-     
-     //Oututs all of the nodes.
+
+
+     //Outputs all of the nodes.
      void output_Nodes()
      {
-          c_NT3_Base_Node_1D * tmp_LL = Root;
-          //Root = NULL;
-          //Root = NULL;
-          c_NT3_Base_Node_1D * tmp_LL_Next = NULL;
-          
-          while (tmp_LL != NULL)
-          {
-               tmp_LL_Next = tmp_LL->Next;
-               std::cout << "\n  ";
-               tmp_LL->bp_O();
-               tmp_LL = tmp_LL_Next;
-          }
+         c_NT3_Base_Node_1D* tmp_LL = Root;
+         //Root = NULL;
+         //Root = NULL;
+         c_NT3_Base_Node_1D* tmp_LL_Next = NULL;
+
+         while (tmp_LL != NULL)
+         {
+             tmp_LL_Next = tmp_LL->Next;
+             std::cout << "\n  ";
+             tmp_LL->bp_O();
+             tmp_LL = tmp_LL_Next;
+         }
      }
+
+     //Outputs all of the nodes.
+     void output_Nodes_Raw()
+     {
+         c_NT3_Base_Node_1D* tmp_LL = Root;
+         //Root = NULL;
+         //Root = NULL;
+         c_NT3_Base_Node_1D* tmp_LL_Next = NULL;
+
+         while (tmp_LL != NULL)
+         {
+             tmp_LL_Next = tmp_LL->Next;
+             std::cout << "\n  " << tmp_LL->NID.I;
+             std::cout << "  (" << tmp_LL->X << ", " << tmp_LL->Y << ")";
+             tmp_LL->bp_O();
+             tmp_LL = tmp_LL_Next;
+         }
+     }
+
+     //Outputs all of the nodes.
+     void output_Nodes_Stats()
+     {
+         ostr(0, 13, "\n Number Of Tiers: "); std::cout << Highest_Tier;
+         for (int cou_T = 0; cou_T < Highest_Tier; cou_T++)
+         {
+             ostr(0, 7, "\n --Tier_Count["); std::cout << cou_T; ostr(0, 7, "]: "); std::cout << Tier_Count[cou_T];
+         }
+     }
+
+     //Outputs all of the nodes graphically.
+     void output_Nodes_GUI(olc::PixelGameEngine* pge)
+     {
+         c_NT3_Base_Node_1D* tmp_LL = Root;
+         //Root = NULL;
+         //Root = NULL;
+         c_NT3_Base_Node_1D* tmp_LL_Next = NULL;
+
+         while (tmp_LL != NULL)
+         {
+             tmp_LL_Next = tmp_LL->Next;
+             tmp_LL->output_GUI(pge);
+             tmp_LL = tmp_LL_Next;
+         }
+     }
+
 };
 
 

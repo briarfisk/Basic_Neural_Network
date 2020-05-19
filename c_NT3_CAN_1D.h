@@ -22,6 +22,8 @@ public:
      
      //The treetop node.
      c_NT3_Base_Node_1D * Treetop;
+
+     //
      
      c_NT3_CAN_1D()
      {
@@ -100,7 +102,7 @@ public:
           {
                for (int cou_Index=0;cou_Index<((Number_Of_Tiers - cou_T) - 1);cou_Index++)
                {
-                    CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1]);
+                    CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1], cou_T);
                }
           }
           
@@ -109,7 +111,7 @@ public:
           if (Number_Of_Tiers == 1){ Nodes->convert_To_Treetop_Node(CAN[0] [0]); Treetop = CAN[0] [0]; return; }
           
           //Gets the treetop node.
-          CAN[Number_Of_Tiers - 1] [0] = Nodes->get_Treetop_Connection(CAN[Number_Of_Tiers - 2] [0], CAN[Number_Of_Tiers - 2] [1]);
+          CAN[Number_Of_Tiers - 1] [0] = Nodes->get_Treetop_Connection(CAN[Number_Of_Tiers - 2] [0], CAN[Number_Of_Tiers - 2] [1], (Number_Of_Tiers - 1));
           
           //Gather treetop node.
           Treetop = CAN[Number_Of_Tiers - 1] [0];
@@ -190,13 +192,13 @@ public:
      //Outputs the CAN.
      void output_CAN()
      {
-          cout << "\n\n";
+          std::cout << "\n\n";
           for (int cou_T=0;cou_T<Number_Of_Tiers;cou_T++)
           {
-               cout << "\n" << cou_T << "->";
+               std::cout << "\n" << cou_T << "->";
                for (int cou_Index=0;cou_Index<(Number_Of_Tiers - cou_T);cou_Index++)
                {
-                    cout << " {" << CAN[cou_T] [cou_Index] << "}";
+                    std::cout << " {" << CAN[cou_T] [cou_Index] << "}";
                }
           }
      }
@@ -204,13 +206,13 @@ public:
      //Outputs the CAN.
      void output_CAN_RC()
      {
-          cout << "\n\n";
+          std::cout << "\n\n";
           for (int cou_T=0;cou_T<Number_Of_Tiers;cou_T++)
           {
-               cout << "\n" << cou_T << "->";
+               std::cout << "\n" << cou_T << "->";
                for (int cou_Index=0;cou_Index<(Number_Of_Tiers - cou_T);cou_Index++)
                {
-                    cout << " {" << CAN[cou_T] [cou_Index]->get_RC_Score() << "}";
+                    std::cout << " {" << CAN[cou_T] [cou_Index]->get_RC_Score() << "}";
                }
           }
      }
@@ -218,15 +220,15 @@ public:
      //Outputs the CAN.
      void output_CAN_State()
      {
-          cout << "\n\n";
+          std::cout << "\n\n";
           for (int cou_T=0;cou_T<Number_Of_Tiers;cou_T++)
           {
-               cout << "\n" << cou_T << "->";
+               std::cout << "\n" << cou_T << "->";
                for (int cou_Index=0;cou_Index<(Number_Of_Tiers - cou_T);cou_Index++)
                {
-                    cout << " {";
+                    std::cout << " {";
                     Nodes->bp_Output_Only(CAN[cou_T] [cou_Index]);
-                    cout << "}";
+                    std::cout << "}";
                }
           }
      }
@@ -234,13 +236,13 @@ public:
      //Outputs the CAN.
      void output_CAN_Type()
      {
-          cout << "\n\n";
+          std::cout << "\n\n";
           for (int cou_T=0;cou_T<Number_Of_Tiers;cou_T++)
           {
-               cout << "\n" << cou_T << "->";
+               std::cout << "\n" << cou_T << "->";
                for (int cou_Index=0;cou_Index<(Number_Of_Tiers - cou_T);cou_Index++)
                {
-                    cout << " {" << (CAN[cou_T] [cou_Index]->get_Type()) << "}";
+                    std::cout << " {" << (CAN[cou_T] [cou_Index]->get_Type()) << "}";
                }
           }
      }
@@ -248,13 +250,13 @@ public:
      //Outputs the CAN.
      void output_CAN_Axons()
      {
-          cout << "\n\n";
+          std::cout << "\n\n";
           for (int cou_T=0;cou_T<Number_Of_Tiers;cou_T++)
           {
-               cout << "\n" << cou_T << "->";
+               std::cout << "\n" << cou_T << "->";
                for (int cou_Index=0;cou_Index<(Number_Of_Tiers - cou_T);cou_Index++)
                {
-                    cout << " {" << CAN[cou_T] [cou_Index] << " (" << (CAN[cou_T] [cou_Index]->Axon_Count_L) << ", " << (CAN[cou_T] [cou_Index]->Axon_Count_R) << ")}";
+                    std::cout << " {" << CAN[cou_T] [cou_Index] << " (" << (CAN[cou_T] [cou_Index]->Axon_Count_L) << ", " << (CAN[cou_T] [cou_Index]->Axon_Count_R) << ")}";
                }
           }
      }
