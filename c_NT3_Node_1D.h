@@ -375,18 +375,6 @@ public:
          {
              pge->DrawLine((X * 5), (Y * 15), (Dendrite_R->X * 5), (Dendrite_R->Y * 15));
          }
-
-         /*
-         for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
-         {
-             pge->DrawLine((X * 5), (Y * 5), (Axons_L[cou_AL]->X * 5), (Axons_L[cou_AL]->Y * 5));
-         }
-
-         for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
-         {
-             pge->DrawLine((X * 5), (Y * 5), (Axons_R[cou_AR]->X * 5), (Axons_R[cou_AR]->Y * 5));
-         }
-         */
      }
 };
 
