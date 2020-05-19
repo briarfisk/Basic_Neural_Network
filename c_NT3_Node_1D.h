@@ -366,6 +366,16 @@ public:
      void output_GUI(olc::PixelGameEngine* pge)
      {
          pge->Draw((X * 5), (Y * 5));
+
+         for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
+         {
+             pge->DrawLine((X * 5), (Y * 5), (Axons_L[cou_AL]->X * 5), (Axons_L[cou_AL]->Y * 5));
+         }
+
+         for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
+         {
+             pge->DrawLine((X * 5), (Y * 5), (Axons_R[cou_AR]->X * 5), (Axons_R[cou_AR]->Y * 5));
+         }
      }
 };
 
@@ -663,6 +673,17 @@ public:
      void output_GUI(olc::PixelGameEngine* pge)
      {
          pge->Draw((X * 5), (Y * 5));
+
+         for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
+         {
+             pge->DrawLine((X * 5), (Y * 5), (Axons_L[cou_AL]->X * 5), (Axons_L[cou_AL]->Y * 5));
+         }
+
+         for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
+         {
+             pge->DrawLine((X * 5), (Y * 5), (Axons_R[cou_AR]->X * 5), (Axons_R[cou_AR]->Y * 5));
+         }
+
      }
 };
 

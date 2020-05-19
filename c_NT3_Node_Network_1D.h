@@ -913,10 +913,14 @@ public:
      void output_Nodes_Stats()
      {
          ostr(0, 13, "\n Number Of Tiers: "); std::cout << Highest_Tier;
+         long long int tmp_Count = 0;
          for (int cou_T = 0; cou_T < Highest_Tier; cou_T++)
          {
              ostr(0, 7, "\n --Tier_Count["); std::cout << cou_T; ostr(0, 7, "]: "); std::cout << Tier_Count[cou_T];
+             tmp_Count += Tier_Count[cou_T];
          }
+         ostr(0, 15, "\n\n Total Node Count: "); std::cout << tmp_Count;
+
      }
 
      //Outputs all of the nodes graphically.

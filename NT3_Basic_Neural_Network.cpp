@@ -26,6 +26,7 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+		std::cout << "\n\n ->";
 		getline(std::cin, Input);
 		Conman.in(0, 0, Input);
 		Conman.Build();
