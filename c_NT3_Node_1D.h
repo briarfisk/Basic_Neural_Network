@@ -365,7 +365,28 @@ public:
      //Outputs the node graphically based on XY through the olcPGE library.
      void output_GUI(olc::PixelGameEngine* pge)
      {
-         pge->Draw((X * 5), (Y * 5));
+         pge->Draw((X * 5), (Y * 15));
+
+         if (Dendrite_L != NULL)
+         {
+             pge->DrawLine((X * 5), (Y * 15), (Dendrite_L->X * 5), (Dendrite_L->Y * 15));
+         }
+         if (Dendrite_R != NULL)
+         {
+             pge->DrawLine((X * 5), (Y * 15), (Dendrite_R->X * 5), (Dendrite_R->Y * 15));
+         }
+
+         /*
+         for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
+         {
+             pge->DrawLine((X * 5), (Y * 5), (Axons_L[cou_AL]->X * 5), (Axons_L[cou_AL]->Y * 5));
+         }
+
+         for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
+         {
+             pge->DrawLine((X * 5), (Y * 5), (Axons_R[cou_AR]->X * 5), (Axons_R[cou_AR]->Y * 5));
+         }
+         */
      }
 };
 
@@ -662,7 +683,18 @@ public:
      //Outputs the node graphically based on XY through the olcPGE library.
      void output_GUI(olc::PixelGameEngine* pge)
      {
-         pge->Draw((X * 5), (Y * 5));
+         pge->Draw((X * 5), (Y * 15));
+
+         for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
+         {
+             pge->DrawLine((X * 5), (Y * 15), (Axons_L[cou_AL]->X * 5), (Axons_L[cou_AL]->Y * 15));
+         }
+
+         for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
+         {
+             pge->DrawLine((X * 5), (Y * 15), (Axons_R[cou_AR]->X * 5), (Axons_R[cou_AR]->Y * 15));
+         }
+
      }
 };
 

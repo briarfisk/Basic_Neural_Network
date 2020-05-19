@@ -32,6 +32,7 @@ public:
           CAN = NULL;
           Treetop = NULL;
           Number_Of_Tiers = 0;
+          flg_Is_Idle = 1;
      }
      
      ~c_NT3_CAN_1D()
@@ -56,7 +57,8 @@ public:
      {
           resize();
           fill_State();
-          build_Tiers_Full();
+          //build_Tiers_Full();
+          build_Tiers_Full_Step_Setup();
      }
      
      //Builds full with RC reinforcing.
@@ -102,7 +104,8 @@ public:
           {
                for (int cou_Index=0;cou_Index<((Number_Of_Tiers - cou_T) - 1);cou_Index++)
                {
-                    CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1], cou_T);
+                    CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1], (cou_T + 1));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                }
           }
           
@@ -116,7 +119,55 @@ public:
           //Gather treetop node.
           Treetop = CAN[Number_Of_Tiers - 1] [0];
      }
-     
+
+     bool flg_Is_Idle;
+     int Current_Fill_Tier;
+     int Current_Fill_Index;
+
+     void build_Tiers_Full_Step_Setup()
+     {
+         flg_Is_Idle = 0;
+         Current_Fill_Tier = 0;
+         Current_Fill_Index = 0;
+     }
+
+     //Builds the Tiers full with tracking vars rather than a for loop. Allows for stepping through.
+     bool build_Tiers_Full_Step()
+     {
+         std::cout << "\n btfs: " << Current_Fill_Tier << ", " << Current_Fill_Index;
+
+         if (Current_Fill_Tier < (Number_Of_Tiers - 2))
+         {
+
+             if (Current_Fill_Index < ((Number_Of_Tiers - Current_Fill_Tier) - 1))
+             {
+
+                 CAN[Current_Fill_Tier + 1][Current_Fill_Index] = Nodes->get_Upper_Tier_Connection(CAN[Current_Fill_Tier][Current_Fill_Index], CAN[Current_Fill_Tier][Current_Fill_Index + 1], (Current_Fill_Tier + 1));
+                 Current_Fill_Index++;
+             }
+             else
+             {
+                 Current_Fill_Index = 0;
+                 Current_Fill_Tier++;
+             }
+         }
+         else
+         {
+             //If there are not enough tiers to create a treetop connection then return NULL.
+             if (Number_Of_Tiers < 1) { Treetop = NULL; return 1; }
+             if (Number_Of_Tiers == 1) { Nodes->convert_To_Treetop_Node(CAN[0][0]); Treetop = CAN[0][0]; return 1; }
+
+             //Gets the treetop node.
+             CAN[Number_Of_Tiers - 1][0] = Nodes->get_Treetop_Connection(CAN[Number_Of_Tiers - 2][0], CAN[Number_Of_Tiers - 2][1], (Number_Of_Tiers - 1));
+
+             //Gather treetop node.
+             Treetop = CAN[Number_Of_Tiers - 1][0];
+
+             flg_Is_Idle = 1;
+         }
+         return flg_Is_Idle;
+     }
+
      //Builds the Tiers full.
      void build_Tiers_Query()
      {

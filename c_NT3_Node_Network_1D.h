@@ -28,6 +28,8 @@ public:
 
      int Highest_Tier;
      int Tier_Count[1000];
+
+     olc::PixelGameEngine* PGE;
      
      c_NT3_Node_Network_1D()
      {
@@ -35,6 +37,7 @@ public:
           Root = NULL;
           Current_Node = &Root;
           Highest_Tier = 0;
+          PGE = NULL;
           for (int cou_Index = 0; cou_Index < 1000; cou_Index++)
           {
               Tier_Count[cou_Index] = 0;
@@ -71,6 +74,11 @@ public:
           delete Root;
      }
      
+     //Sets the pixel game engine object reference.
+     void set_PGE(olc::PixelGameEngine* p_PGE)
+     {
+         PGE = p_PGE;
+     }
      
      ////==------------------+
      //==--   NODE CREATION
@@ -236,6 +244,8 @@ public:
           {
                new_State_Node(p_State, p_Tier, p_A_L, p_A_R);
           }
+
+          (*State_Tree.Current)->NID->output_GUI(PGE);
           
           //Return the current node NID.
           return State_Tree.get_Current_Node_NID();
@@ -264,6 +274,8 @@ public:
           tmp_Node = p_L->does_Upper_Tier_Connection_Exist(p_R);
           if (tmp_Node != NULL)
           {
+
+              tmp_Node->output_GUI(PGE);
                return tmp_Node;
           }
           
@@ -276,6 +288,8 @@ public:
           p_L->add_Axon_L(tmp_Node);
           p_R->add_Axon_R(tmp_Node);
           
+          tmp_Node->output_GUI(PGE);
+
           return tmp_Node;
      }
      
@@ -913,10 +927,14 @@ public:
      void output_Nodes_Stats()
      {
          ostr(0, 13, "\n Number Of Tiers: "); std::cout << Highest_Tier;
+         long long int tmp_Count = 0;
          for (int cou_T = 0; cou_T < Highest_Tier; cou_T++)
          {
              ostr(0, 7, "\n --Tier_Count["); std::cout << cou_T; ostr(0, 7, "]: "); std::cout << Tier_Count[cou_T];
+             tmp_Count += Tier_Count[cou_T];
          }
+         ostr(0, 15, "\n\n Total Node Count: "); std::cout << tmp_Count;
+
      }
 
      //Outputs all of the nodes graphically.
