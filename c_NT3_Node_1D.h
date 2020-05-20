@@ -74,7 +74,7 @@ public:
      virtual void bp_R()=0; //bp_Output the right node.
 
      virtual void set_Padding(int p_X_Padd, int p_Y_Padd)=0;
-     virtual void output_GUI(olc::PixelGameEngine* pge)=0;
+     virtual void output_GUI(olc::PixelGameEngine* pge, int p_Color_Scheme = 0)=0;
 };
 
 //The normal node to use.
@@ -299,7 +299,8 @@ public:
      //Reinforces the node.
      void reinforce()
      {
-          RC_Lvl += double (1.0f / int (RC_Lvl));
+          //RC_Lvl += double (1.0f / RC_Lvl);
+          RC_Lvl++;
      }
      
      //Returns the Reinforcement score of the node. double (RC_Lvl + (RC_XP / RC_Lvl))
@@ -379,21 +380,45 @@ public:
      }
      
      //Outputs the node graphically based on XY through the olcPGE library.
-     void output_GUI(olc::PixelGameEngine* pge)
+     void output_GUI(olc::PixelGameEngine* pge, int p_Color_Scheme = 0)
      {
          pge->Draw((X * X_Padd), (Y * Y_Padd));
 
+         olc::Pixel tmp_Pixel[2];
+
+         if (get_RC_Lvl() < 4)
+         {
+             tmp_Pixel[0].a = (unsigned int)(get_RC_Lvl()) * 50;
+             if ((unsigned int)(tmp_Pixel[0].a) > 255) { tmp_Pixel[0].a = 255; }
+
+             tmp_Pixel[1].a = (unsigned int)(get_RC_Lvl()) * 50;
+             if ((unsigned int)(tmp_Pixel[1].a) > 255) { tmp_Pixel[1].a = 255; }
+         }
+         else
+         {
+             tmp_Pixel[0].a = 255; 
+             tmp_Pixel[1].a = 255; 
+         }
+
+         tmp_Pixel[0].r = 0;
+         tmp_Pixel[0].g = 0;
+         tmp_Pixel[0].b = 255;
+
+         tmp_Pixel[1].r = 255;
+         tmp_Pixel[1].g = 0;
+         tmp_Pixel[1].b = 0;
+         //std::cout << "\n Pixel[0].a :" << int(tmp_Pixel[0].a);
+         //std::cout << "\n Pixel[1].a :" << int(tmp_Pixel[1].a);
+
          if (Dendrite_L != NULL)
          {
-             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_L->X * X_Padd), (Dendrite_L->Y * Y_Padd), olc::BLUE);
+             if (p_Color_Scheme == 0) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_L->X * X_Padd), (Dendrite_L->Y * Y_Padd), tmp_Pixel[0]); }
+             if (p_Color_Scheme == 1) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_L->X * X_Padd), (Dendrite_L->Y * Y_Padd), olc::GREEN); }
          }
          if (Dendrite_R != NULL)
          {
-<<<<<<< Updated upstream
-             pge->DrawLine((X * 5), (Y * 15), (Dendrite_R->X * 5), (Dendrite_R->Y * 15));
-=======
-             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_R->X * X_Padd), (Dendrite_R->Y * Y_Padd), olc::RED);
->>>>>>> Stashed changes
+             if (p_Color_Scheme == 0) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_R->X * X_Padd), (Dendrite_R->Y * Y_Padd), tmp_Pixel[1]); }
+             if (p_Color_Scheme == 1) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_R->X * X_Padd), (Dendrite_R->Y * Y_Padd), olc::GREEN); }
          }
      }
 };
@@ -621,7 +646,9 @@ public:
      //Reinforces the node.
      void reinforce()
      {
-          RC_Lvl += double (1.0f / int (RC_Lvl));
+
+          RC_Lvl++;
+          //RC_Lvl += double (1.0f / int (RC_Lvl));
      }
      
      //Returns the Reinforcement score of the node. double (RC_Lvl + (RC_XP / RC_Lvl))
@@ -701,10 +728,10 @@ public:
 
 
      //Outputs the node graphically based on XY through the olcPGE library.
-     void output_GUI(olc::PixelGameEngine* pge)
+     void output_GUI(olc::PixelGameEngine* pge, int p_Color_Scheme = 0)
      {
          pge->Draw((X * X_Padd), (Y * Y_Padd));
-
+         /*
          for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
          {
              pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Axons_L[cou_AL]->X * X_Padd), (Axons_L[cou_AL]->Y * Y_Padd), olc::BLUE);
@@ -714,6 +741,7 @@ public:
          {
              pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Axons_R[cou_AR]->X * X_Padd), (Axons_R[cou_AR]->Y * Y_Padd), olc::RED);
          }
+         */
 
      }
 };
