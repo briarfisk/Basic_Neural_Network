@@ -23,7 +23,8 @@ public:
      //The treetop node.
      c_NT3_Base_Node_1D * Treetop;
 
-     //
+     //The olcPixelGameEngine object.
+     olc::PixelGameEngine* PGE;
      
      c_NT3_CAN_1D()
      {
@@ -33,6 +34,7 @@ public:
           Treetop = NULL;
           Number_Of_Tiers = 0;
           flg_Is_Idle = 1;
+          PGE = NULL;
      }
      
      ~c_NT3_CAN_1D()
@@ -40,6 +42,11 @@ public:
           reset();
      }
      
+     void set_PGE(olc::PixelGameEngine* p_PGE)
+     {
+         PGE = p_PGE;
+     }
+
      //Initializes the CAN with an input cell and the node netowrk.
      void init(c_NT3_Node_Network_1D * p_Nodes)
      {
@@ -66,7 +73,7 @@ public:
      {
           resize();
           fill_State();
-          build_Tiers_Full();
+          build_Tiers_Full_Step_Setup();
           reinforce();
      }
      
@@ -105,6 +112,7 @@ public:
                for (int cou_Index=0;cou_Index<((Number_Of_Tiers - cou_T) - 1);cou_Index++)
                {
                     CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1], (cou_T + 1));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                }
           }
           
@@ -117,6 +125,8 @@ public:
           
           //Gather treetop node.
           Treetop = CAN[Number_Of_Tiers - 1] [0];
+
+          reinforce();
      }
 
      bool flg_Is_Idle;
@@ -142,6 +152,8 @@ public:
              {
 
                  CAN[Current_Fill_Tier + 1][Current_Fill_Index] = Nodes->get_Upper_Tier_Connection(CAN[Current_Fill_Tier][Current_Fill_Index], CAN[Current_Fill_Tier][Current_Fill_Index + 1], (Current_Fill_Tier + 1));
+                 //CAN[Current_Fill_Tier + 1][Current_Fill_Index]->output_GUI(PGE, 1);
+                 CAN[Current_Fill_Tier + 1][Current_Fill_Index]->reinforce();
                  Current_Fill_Index++;
              }
              else
@@ -158,6 +170,7 @@ public:
 
              //Gets the treetop node.
              CAN[Number_Of_Tiers - 1][0] = Nodes->get_Treetop_Connection(CAN[Number_Of_Tiers - 2][0], CAN[Number_Of_Tiers - 2][1], (Number_Of_Tiers - 1));
+             CAN[Number_Of_Tiers - 1][0]->reinforce();
 
              //Gather treetop node.
              Treetop = CAN[Number_Of_Tiers - 1][0];

@@ -201,6 +201,7 @@ public:
      {
          PGE = p_PGE;
          Nodes.set_PGE(p_PGE);
+         CAN.set_PGE(p_PGE);
      }
      
      //Sets the name of the construct and the tables.
