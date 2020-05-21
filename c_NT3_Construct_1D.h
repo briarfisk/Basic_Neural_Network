@@ -197,7 +197,7 @@ public:
      }
 
      //Sets the Pixel game engine object reference.
-     void set_PGE(olc::PixelGameEngine* p_PGE)
+     void init(olc::PixelGameEngine* p_PGE)
      {
          PGE = p_PGE;
          Nodes.set_PGE(p_PGE);
@@ -1566,6 +1566,41 @@ public:
 		 Nodes.output_Nodes_GUI(pge);
 	 }
      
+     void X_Offset_Less(int p_Increment)
+     {
+         Nodes.X_Offset_Less(p_Increment);
+     }
+     void X_Offset_More(int p_Increment)
+     {
+         Nodes.X_Offset_More(p_Increment);
+     }
+     void Y_Offset_Less(int p_Increment)
+     {
+         Nodes.Y_Offset_Less(p_Increment);
+     }
+     void Y_Offset_More(int p_Increment)
+     {
+         Nodes.Y_Offset_More(p_Increment);
+     }
+
+     void X_Padd_Less(int p_Increment)
+     {
+         Nodes.X_Padd_Less(p_Increment);
+     }
+     void X_Padd_More(int p_Increment)
+     {
+         Nodes.X_Padd_More(p_Increment);
+     }
+     void Y_Padd_Less(int p_Increment)
+     {
+         Nodes.Y_Padd_Less(p_Increment);
+     }
+     void Y_Padd_More(int p_Increment)
+     {
+         Nodes.Y_Padd_More(p_Increment);
+     }
+
+
      ////==--------------+
      //==--   INTERFACE  
      ////==--------------+

@@ -33,6 +33,9 @@ public:
      //This is used for things such as the buffer trees or anything that relies on references.
      void * Ref;
 
+     //The tier of the node.
+     int Tier;
+
      //The position used by the GUI.
      int X;
      int Y;
@@ -42,6 +45,8 @@ public:
      int Y_Padd;
      
      //Member Functions.
+     virtual void set_Tier(int p_Tier)=0;
+
      virtual void add_Axon_L(c_NT3_Base_Node_1D * p_Axon)=0; //Adds an axon on the left leg.
      virtual void add_Axon_R(c_NT3_Base_Node_1D * p_Axon)=0; //Adds an axon on the right leg.
      
@@ -59,7 +64,7 @@ public:
      virtual void set_Dendrite_L(c_NT3_Base_Node_1D * p_Dendrite)=0; //Sets the left dendrite to the given dendrite.
      virtual void set_Dendrite_R(c_NT3_Base_Node_1D * p_Dendrite)=0; //Sets the right dendrite to the given dendrite.
      
-     virtual void reinforce()=0; //Reinforces the node.
+     virtual double reinforce()=0; //Reinforces the node.
      virtual double get_RC_Score()=0; //Returns the Reinforcement score of the node. double (RC_Lvl + (RC_XP / RC_Lvl))
      virtual double get_RC_Lvl()=0; //Returns the current reinforcement Lvl.
      
@@ -74,7 +79,7 @@ public:
      virtual void bp_R()=0; //bp_Output the right node.
 
      virtual void set_Padding(int p_X_Padd, int p_Y_Padd)=0;
-     virtual void output_GUI(olc::PixelGameEngine* pge, int p_Color_Scheme = 0)=0;
+     virtual void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_Color_Scheme = 0)=0;
 };
 
 //The normal node to use.
@@ -106,10 +111,12 @@ public:
           
           Ref = NULL;
 
+          Tier = 0;
+
           X = 0;
           Y = 0;
-          X_Padd = 2;
-          Y_Padd = 75;
+          X_Padd = 4;
+          Y_Padd = 40;
      }
      
      ~c_NT3_Node_1D()
@@ -156,6 +163,12 @@ public:
      
      //==--  Member Functions.
      
+     //Sets the tier.
+     void set_Tier(int p_Tier)
+     {
+         Tier = p_Tier;
+     }
+
      //Adds an axon on the left leg.
      void add_Axon_L(c_NT3_Base_Node_1D * p_Axon)
      {
@@ -297,10 +310,10 @@ public:
      }
      
      //Reinforces the node.
-     void reinforce()
+     double reinforce()
      {
           //RC_Lvl += double (1.0f / RC_Lvl);
-          RC_Lvl++;
+          return RC_Lvl++;
      }
      
      //Returns the Reinforcement score of the node. double (RC_Lvl + (RC_XP / RC_Lvl))
@@ -380,45 +393,67 @@ public:
      }
      
      //Outputs the node graphically based on XY through the olcPGE library.
-     void output_GUI(olc::PixelGameEngine* pge, int p_Color_Scheme = 0)
+     void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_Color_Scheme = 0)
      {
-         pge->Draw((X * X_Padd), (Y * Y_Padd));
+
 
          olc::Pixel tmp_Pixel[2];
+         double tmp_RC_Lvl = get_RC_Lvl();
 
-         if (get_RC_Lvl() < 4)
-         {
-             tmp_Pixel[0].a = (unsigned int)(get_RC_Lvl()) * 50;
-             if ((unsigned int)(tmp_Pixel[0].a) > 255) { tmp_Pixel[0].a = 255; }
+         if (p_HRC > 7) { p_HRC = 7; }
 
-             tmp_Pixel[1].a = (unsigned int)(get_RC_Lvl()) * 50;
-             if ((unsigned int)(tmp_Pixel[1].a) > 255) { tmp_Pixel[1].a = 255; }
-         }
-         else
-         {
-             tmp_Pixel[0].a = 255; 
-             tmp_Pixel[1].a = 255; 
-         }
+         tmp_Pixel[0].a = char((tmp_RC_Lvl / p_HRC) * 250);
 
-         tmp_Pixel[0].r = 0;
-         tmp_Pixel[0].g = 0;
+         if ((tmp_RC_Lvl / p_HRC) > 1.0) { tmp_Pixel[0].a = 255; }
+
+         tmp_Pixel[1].a = tmp_Pixel[0].a;
+         if ((unsigned int)(tmp_Pixel[1].a) > 255) { tmp_Pixel[1].a = 255; }
+
+         //std::cout << "\n char((tmp_RC_Lvl: " << tmp_RC_Lvl << " / p_HRC: " << p_HRC << "): " << (tmp_RC_Lvl / p_HRC) << " * 250): " << unsigned int(char((get_RC_Lvl() / p_HRC) * 250));
+
+         tmp_Pixel[0].r = 255;
+         tmp_Pixel[0].g = 255;
          tmp_Pixel[0].b = 255;
 
-         tmp_Pixel[1].r = 255;
-         tmp_Pixel[1].g = 0;
+         tmp_Pixel[1].r = 0;
+         tmp_Pixel[1].g = 255;
          tmp_Pixel[1].b = 0;
          //std::cout << "\n Pixel[0].a :" << int(tmp_Pixel[0].a);
          //std::cout << "\n Pixel[1].a :" << int(tmp_Pixel[1].a);
 
-         if (Dendrite_L != NULL)
+         if ((p_X_Padd > 0) && (p_Y_Padd > 0))
          {
-             if (p_Color_Scheme == 0) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_L->X * X_Padd), (Dendrite_L->Y * Y_Padd), tmp_Pixel[0]); }
-             if (p_Color_Scheme == 1) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_L->X * X_Padd), (Dendrite_L->Y * Y_Padd), olc::GREEN); }
+             if (Dendrite_L != NULL)
+             {
+                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset), tmp_Pixel[0]); }
+                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset), olc::GREEN); }
+             }
+             if (Dendrite_R != NULL)
+             {
+                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_R->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * p_Y_Padd) + p_Y_Offset), tmp_Pixel[1]); }
+                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_R->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * p_Y_Padd) + p_Y_Offset), olc::GREEN); }
+             }
          }
-         if (Dendrite_R != NULL)
+         else
          {
-             if (p_Color_Scheme == 0) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_R->X * X_Padd), (Dendrite_R->Y * Y_Padd), tmp_Pixel[1]); }
-             if (p_Color_Scheme == 1) { pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Dendrite_R->X * X_Padd), (Dendrite_R->Y * Y_Padd), olc::GREEN); }
+             if (Dendrite_L != NULL)
+             {
+                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_L->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * Y_Padd) + p_Y_Offset), tmp_Pixel[0]); }
+                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_L->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * Y_Padd) + p_Y_Offset), olc::GREEN); }
+             }
+             if (Dendrite_R != NULL)
+             {
+                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_R->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * Y_Padd) + p_Y_Offset), tmp_Pixel[1]); }
+                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_R->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * Y_Padd) + p_Y_Offset), olc::GREEN); }
+             }
+         }
+         if ((p_X_Padd > 0) && (p_Y_Padd > 0))
+         {
+             pge->Draw(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset));
+         }
+         else
+         {
+             pge->Draw(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset));
          }
      }
 };
@@ -461,8 +496,8 @@ public:
 
           X = 0;
           Y = 0;
-          X_Padd = 2;
-          Y_Padd = 75;
+          X_Padd = 4;
+          Y_Padd = 40;
      }
      
      ~c_NT3_State_Node_1D()
@@ -503,7 +538,13 @@ public:
      
      
      //==--  Member Functions.
-     
+
+     //Sets the tier.
+     void set_Tier(int p_Tier)
+     {
+         Tier = p_Tier;
+     }
+
      //Adds an axon on the left leg.
      void add_Axon_L(c_NT3_Base_Node_1D * p_Axon)
      {
@@ -644,10 +685,11 @@ public:
      }
      
      //Reinforces the node.
-     void reinforce()
+     double reinforce()
      {
 
           RC_Lvl++;
+          return RC_Lvl;
           //RC_Lvl += double (1.0f / int (RC_Lvl));
      }
      
@@ -728,9 +770,16 @@ public:
 
 
      //Outputs the node graphically based on XY through the olcPGE library.
-     void output_GUI(olc::PixelGameEngine* pge, int p_Color_Scheme = 0)
+     void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_Color_Scheme = 0)
      {
-         pge->Draw((X * X_Padd), (Y * Y_Padd));
+         if ((p_X_Padd > 0) && (p_Y_Padd > 0))
+         {
+             pge->Draw(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset));
+         }
+         else
+         {
+             pge->Draw(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset));
+         }
          /*
          for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
          {
@@ -745,27 +794,3 @@ public:
 
      }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -140,6 +140,14 @@ public:
          Current_Fill_Index = 0;
      }
 
+     void check_RC(double p_RC)
+     {
+         if (Nodes->RC_Highest < p_RC)
+         {
+             Nodes->RC_Highest = p_RC;
+         }
+     }
+
      //Builds the Tiers full with tracking vars rather than a for loop. Allows for stepping through.
      bool build_Tiers_Full_Step()
      {
@@ -153,7 +161,10 @@ public:
 
                  CAN[Current_Fill_Tier + 1][Current_Fill_Index] = Nodes->get_Upper_Tier_Connection(CAN[Current_Fill_Tier][Current_Fill_Index], CAN[Current_Fill_Tier][Current_Fill_Index + 1], (Current_Fill_Tier + 1));
                  //CAN[Current_Fill_Tier + 1][Current_Fill_Index]->output_GUI(PGE, 1);
-                 CAN[Current_Fill_Tier + 1][Current_Fill_Index]->reinforce();
+                 check_RC(CAN[Current_Fill_Tier + 1][Current_Fill_Index]->reinforce());
+
+
+
                  Current_Fill_Index++;
              }
              else
@@ -170,7 +181,7 @@ public:
 
              //Gets the treetop node.
              CAN[Number_Of_Tiers - 1][0] = Nodes->get_Treetop_Connection(CAN[Number_Of_Tiers - 2][0], CAN[Number_Of_Tiers - 2][1], (Number_Of_Tiers - 1));
-             CAN[Number_Of_Tiers - 1][0]->reinforce();
+             check_RC(CAN[Number_Of_Tiers - 1][0]->reinforce());
 
              //Gather treetop node.
              Treetop = CAN[Number_Of_Tiers - 1][0];
@@ -201,7 +212,7 @@ public:
                for (int cou_Index=0;cou_Index<(Number_Of_Tiers - cou_T);cou_Index++)
                {
                     if (CAN[cou_T] [cou_Index] == NULL){ continue; }
-                    CAN[cou_T] [cou_Index]->reinforce();
+                    check_RC(CAN[cou_T] [cou_Index]->reinforce());
                }
           }
      }

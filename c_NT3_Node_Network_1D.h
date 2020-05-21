@@ -28,9 +28,19 @@ public:
 
      int Highest_Tier;
      int Tier_Count[1000];
+     int Tier_X_Offsets[1000];
+     int Tier_Count_Biggest;
+
 
      olc::PixelGameEngine* PGE;
-     
+
+     int X_Offset;
+     int Y_Offset;
+     int X_Padd;
+     int Y_Padd;
+
+     double RC_Highest;
+
      c_NT3_Node_Network_1D()
      {
           CNID.I = 0;
@@ -38,10 +48,18 @@ public:
           Current_Node = &Root;
           Highest_Tier = 0;
           PGE = NULL;
+          X_Offset = 0;
+          Y_Offset = 0;
+          X_Padd = 3;
+          Y_Padd = 50;
+          Tier_Count_Biggest = 0;
+          RC_Highest = 0;
           for (int cou_Index = 0; cou_Index < 1000; cou_Index++)
           {
               Tier_Count[cou_Index] = 0;
+              Tier_X_Offsets[cou_Index] = 0;
           }
+
      }
      
      ~c_NT3_Node_Network_1D()
@@ -78,6 +96,8 @@ public:
      void set_PGE(olc::PixelGameEngine* p_PGE)
      {
          PGE = p_PGE;
+
+         //X_Offset = PGE->ScreenWidth() / 2;
      }
      
      ////==------------------+
@@ -109,6 +129,9 @@ public:
           //Set the XY
           (*Current_Node)->X = Tier_Count[p_Tier];
           (*Current_Node)->Y = p_Tier;
+          (*Current_Node)->X_Padd = X_Padd;
+          (*Current_Node)->Y_Padd = Y_Padd;
+          (*Current_Node)->Tier = p_Tier;
 
           Tier_Count[p_Tier]++;
           if (Highest_Tier <= p_Tier) { Highest_Tier = p_Tier + 1; }
@@ -143,6 +166,7 @@ public:
           //Set the XY
           (*Current_Node)->X = Tier_Count[p_Tier];
           (*Current_Node)->Y = p_Tier;
+          (*Current_Node)->Tier = p_Tier;
 
           Tier_Count[p_Tier]++;
           if (Highest_Tier <= p_Tier) { Highest_Tier = p_Tier + 1; }
@@ -239,13 +263,16 @@ public:
           //Search for the node.
           State_Tree.search(p_State);
           
+
           //If the node has not been found then create it.
           if (State_Tree.get_Current_Node_NID() == NULL)
           {
                new_State_Node(p_State, p_Tier, p_A_L, p_A_R);
           }
 
-          (*State_Tree.Current)->NID->output_GUI(PGE);
+          int tmp_X_Offset_Lower_Tier = 0;
+          if ((*State_Tree.Current)->NID->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[(*State_Tree.Current)->NID->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+          (*State_Tree.Current)->NID->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
           
           //Return the current node NID.
           return State_Tree.get_Current_Node_NID();
@@ -269,14 +296,17 @@ public:
           
           //A tmp var to hold the upper tier node for returning.
           c_NT3_Base_Node_1D * tmp_Node = NULL;
+
+          int tmp_X_Offset_Lower_Tier = 0;
           
           //Check for an upper tier connection already, if one exists then return it.
           tmp_Node = p_L->does_Upper_Tier_Connection_Exist(p_R);
           if (tmp_Node != NULL)
           {
 
-              tmp_Node->output_GUI(PGE);
-               return tmp_Node;
+                if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+                tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
+                return tmp_Node;
           }
           
           //If one does not exist then create it.
@@ -288,7 +318,9 @@ public:
           p_L->add_Axon_L(tmp_Node);
           p_R->add_Axon_R(tmp_Node);
           
-          tmp_Node->output_GUI(PGE);
+          find_X_Offsets();
+          if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+          tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
 
           return tmp_Node;
      }
@@ -468,6 +500,7 @@ public:
                {
                     *p_SF << "\nSN " << tmp_Node->get_State();
                     *p_SF << " " << tmp_Node->NID.I;
+                    *p_SF << " " << tmp_Node->Tier;
                     *p_SF << " " << tmp_Node->Axon_Count_L;
                     *p_SF << " " << tmp_Node->Axon_Count_R;
                }
@@ -475,6 +508,7 @@ public:
                {
                     *p_SF << "\nN ";
                     *p_SF << " " << tmp_Node->NID.I;
+                    *p_SF << " " << tmp_Node->Tier;
                     *p_SF << " " << tmp_Node->Axon_Count_L;
                     *p_SF << " " << tmp_Node->Axon_Count_R;
                     *p_SF << " " << tmp_Node->Dendrite_L->NID.I;
@@ -484,6 +518,7 @@ public:
                {
                     *p_SF << "\nSTN " << tmp_Node->get_State();
                     *p_SF << " " << tmp_Node->NID.I;
+                    *p_SF << " " << tmp_Node->Tier;
                     *p_SF << " " << tmp_Node->Axon_Count_L;
                     *p_SF << " " << tmp_Node->Axon_Count_R;
                }
@@ -491,185 +526,21 @@ public:
                {
                     *p_SF << "\nTN ";
                     *p_SF << " " << tmp_Node->NID.I;
+                    *p_SF << " " << tmp_Node->Tier;
                     *p_SF << " " << tmp_Node->Axon_Count_L;
                     *p_SF << " " << tmp_Node->Axon_Count_R;
                     *p_SF << " " << tmp_Node->Dendrite_L->NID.I;
                     *p_SF << " " << tmp_Node->Dendrite_R->NID.I;
                }
                *p_SF << " " << tmp_Node->RC_Lvl;
+               *p_SF << " " << tmp_Node->X;
+               *p_SF << " " << tmp_Node->Y;
                
                tmp_Node = tmp_Node->Next;
           }
           
           std::cout << "Complete";
      }
-     
-     //Loads the node network.
-     void load_O(std::ifstream * p_LF)
-     {
-          //Create the file.
-          std::cout << "\n\n Node Network Loading..........";
-          if (p_LF->is_open()){ std::cout << "Authorized"; } else { std::cout << "Denied"; return; }
-          
-          u_Data_3 Node_Count;
-          Node_Count.U = 0;
-          
-          c_NT3_Fractal_State_Tree tmp_Scaffold;
-          
-          c_NT3_Base_Node_1D * tmp_Node = NULL;
-          c_NT3_Base_Node_1D * tmp_D_L = NULL;
-          c_NT3_Base_Node_1D * tmp_D_R = NULL;
-          
-          std::string tmp_Node_Type = "";
-          u_Data_3 tmp_State;
-          tmp_State.I = 0;
-          u_Data_3 tmp_NID;
-          tmp_NID.I = 0;
-          u_Data_3 tmp_L;
-          tmp_L.I = 0;
-          u_Data_3 tmp_R;
-          tmp_R.I = 0;
-          u_Data_3 tmp_RC_Lvl;
-          tmp_RC_Lvl.F = 0.0f;
-          
-          
-          *p_LF >> tmp_Node_Type;
-          tmp_Node_Type = "";
-          *p_LF >> Node_Count.U;
-          std::cout << "\n " << Node_Count.U << " Nodes Found..........";
-          int tmp_X = get_Console_Cursor_X();
-          int tmp_Y = get_Console_Cursor_Y();
-          u_Data_3 Node_Counter;
-          Node_Counter.U = 1;
-          int tmp_Div = int(Node_Count.I) / 1000;
-          if (tmp_Div == 0){ tmp_Div = 1; }
-          
-          while(!(*p_LF).eof())
-          {
-               if (!(Node_Counter.U % tmp_Div))
-               { 
-                    xy(tmp_X, tmp_Y); 
-                    std::cout << ((double (Node_Counter.U) / double (Node_Count.U)) * 100) << "%      "; 
-               }
-               Node_Counter.U++;
-               
-               *p_LF >> tmp_Node_Type;
-               //*std::cout << "\n\n" << tmp_Node_Type;
-               if (tmp_Node_Type == "SN")
-               {
-                    *p_LF >> tmp_State.I;
-                    //*std::cout << " St " << tmp_State.I;
-                    
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
-                    
-                    tmp_Node = get_State_Node(tmp_State);
-                    
-                    tmp_Scaffold.search(tmp_NID);
-                    tmp_Scaffold.set_Current_Node_NID(tmp_Node);
-                    
-               }
-               if (tmp_Node_Type == "N")
-               {
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
-                    
-                    *p_LF >> tmp_L.I;
-                    //*std::cout << " L " << tmp_L.I;
-                    
-                    *p_LF >> tmp_R.I;
-                    //*std::cout << " R " << tmp_R.I;
-                    
-                    //Create the node and add it to the state tree with the NID as an identifier.
-                    tmp_Node = new_Node(0);
-                    tmp_Scaffold.search(tmp_NID);
-                    tmp_Scaffold.set_Current_Node_NID(tmp_Node);
-                    
-                    //Gather the dendrite references from the tree.
-                    tmp_Scaffold.search(tmp_L);
-                    tmp_D_L = tmp_Scaffold.get_Current_Node_NID();
-                    
-                    //*std::cout << "  D_L->" << tmp_D_L << " L->" << tmp_L.I << " " << tmp_Scaffold.flg_Foundit;
-                    
-                    tmp_Scaffold.search(tmp_R);
-                    tmp_D_R = tmp_Scaffold.get_Current_Node_NID();
-                    
-                    //*std::cout << "  D_R->" << tmp_D_R << " R->" << tmp_R.I << " " << tmp_Scaffold.flg_Foundit;
-                    
-                    //Create the lower connections.
-                    create_Connection_L(tmp_D_L, tmp_Node);
-                    create_Connection_R(tmp_D_R, tmp_Node);
-                    
-                    
-                    //*std::cout << " tmp_Node->NID->" << tmp_Node->NID.I;
-               }
-                              
-               if (tmp_Node_Type == "STN")
-               {
-                    *p_LF >> tmp_State.I;
-                    //*std::cout << " St " << tmp_State.I;
-                    
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
-                    
-                    tmp_Node = get_State_Node(tmp_State);
-                    convert_To_Treetop_Node(tmp_Node);
-                    
-                    tmp_Scaffold.search(tmp_NID);
-                    tmp_Scaffold.set_Current_Node_NID(tmp_Node);
-                    
-               }
-               if (tmp_Node_Type == "TN")
-               {
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
-                    
-                    *p_LF >> tmp_L.I;
-                    //*std::cout << " L " << tmp_L.I;
-                    
-                    *p_LF >> tmp_R.I;
-                    //*std::cout << " R " << tmp_R.I;
-                    
-                    //Create the node and add it to the state tree with the NID as an identifier.
-                    tmp_Node = new_Node(0);
-                    tmp_Scaffold.search(tmp_NID);
-                    tmp_Scaffold.set_Current_Node_NID(tmp_Node);
-                    convert_To_Treetop_Node(tmp_Node);
-                    
-                    //Gather the dendrite references from the tree.
-                    tmp_Scaffold.search(tmp_L);
-                    tmp_D_L = tmp_Scaffold.get_Current_Node_NID();
-                    
-                    //*std::cout << "  D_L->" << tmp_D_L << " L->" << tmp_L.I << " " << tmp_Scaffold.flg_Foundit;
-                    
-                    tmp_Scaffold.search(tmp_R);
-                    tmp_D_R = tmp_Scaffold.get_Current_Node_NID();
-                    
-                    //*std::cout << "  D_R->" << tmp_D_R << " R->" << tmp_R.I << " " << tmp_Scaffold.flg_Foundit;
-                    
-                    //Create the lower connections.
-                    create_Connection_L(tmp_D_L, tmp_Node);
-                    create_Connection_R(tmp_D_R, tmp_Node);
-                    
-                    tmp_Node->set_Type(3);
-                    
-                    //*std::cout << " tmp_Node->NID->" << tmp_Node->NID.I;
-               }
-               
-               *p_LF >> tmp_RC_Lvl.F;
-               //*std::cout << " tmp_RC_Lvl " << tmp_RC_Lvl.F;
-               
-               tmp_Node->RC_Lvl = tmp_RC_Lvl.F;
-               
-               //*std::cout << " " << tmp_Node << " ";
-               //tmp_Node->bp_O();
-          }
-          xy(tmp_X, tmp_Y); std::cout << "100.00%      ";
-          std::cout << "\n Resetting Scaffold.....";
-          tmp_Scaffold.reset();
-          std::cout << "Done\n";
-     }
-     
      
      //Loads the node network, new faster method, dendrites only.
      void load(std::ifstream * p_LF)
@@ -693,7 +564,9 @@ public:
           
           u_Data_3 tmp_NID;
           tmp_NID.I = 0;
-          
+
+          int tmp_Tier = 0;
+
           u_Data_3 tmp_L;
           tmp_L.I = 0;
           u_Data_3 tmp_R;
@@ -702,6 +575,9 @@ public:
           u_Data_3 tmp_RC_Lvl;
           tmp_RC_Lvl.F = 0.0f;
           
+          int tmp_X = 0;
+          int tmp_Y = 0;
+
           int tmp_Axon_Count_L = 0;
           int tmp_Axon_Count_R = 0;
           
@@ -718,8 +594,8 @@ public:
                tmp_NScaffold[cou_Index] = NULL;
           }
           
-          int tmp_X = get_Console_Cursor_X();
-          int tmp_Y = get_Console_Cursor_Y();
+          tmp_X = get_Console_Cursor_X();
+          tmp_Y = get_Console_Cursor_Y();
           u_Data_3 Node_Counter;
           Node_Counter.U = 1;
           int tmp_Div = int(Node_Count.I) / 1000;
@@ -934,8 +810,64 @@ public:
              tmp_Count += Tier_Count[cou_T];
          }
          ostr(0, 15, "\n\n Total Node Count: "); std::cout << tmp_Count;
+     }
+
+
+     void X_Offset_Less(int p_Increment)
+     {
+         X_Offset -= p_Increment;
+     }
+     void X_Offset_More(int p_Increment)
+     {
+         X_Offset += p_Increment;
+     }
+     void Y_Offset_Less(int p_Increment)
+     {
+         Y_Offset -= p_Increment;
+     }
+     void Y_Offset_More(int p_Increment)
+     {
+         Y_Offset += p_Increment;
+     }
+
+
+     void X_Padd_Less(int p_Increment)
+     {
+         X_Padd -= p_Increment;
+     }
+     void X_Padd_More(int p_Increment)
+     {
+         X_Padd += p_Increment;
+     }
+     void Y_Padd_Less(int p_Increment)
+     {
+         Y_Padd -= p_Increment;
+     }
+     void Y_Padd_More(int p_Increment)
+     {
+         Y_Padd += p_Increment;
+     }
+
+     //Find the center of the largest tier.
+     //Finds offsets.
+     void find_X_Offsets()
+     {
+         Tier_Count_Biggest = 0;
+         for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
+         {
+             if (Tier_Count[cou_Index] > Tier_Count_Biggest) { Tier_Count_Biggest = Tier_Count[cou_Index]; }
+         }
+         //std::cout << "\n\n X_Largest: " << Tier_Count_Biggest;
+
+         for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
+         {
+             Tier_X_Offsets[cou_Index] = (Tier_Count_Biggest / 2) - (Tier_Count[cou_Index] / 2); 
+             //std::cout << "\n\n " << cou_Index << ":: " << Tier_X_Offsets[cou_Index];
+             Tier_X_Offsets[cou_Index] = (X_Offset + (Tier_X_Offsets[cou_Index] * X_Padd));
+         }
 
      }
+
 
      //Outputs all of the nodes graphically.
      void output_Nodes_GUI(olc::PixelGameEngine* pge)
@@ -945,10 +877,20 @@ public:
          //Root = NULL;
          c_NT3_Base_Node_1D* tmp_LL_Next = NULL;
 
+         int tmp_X_Offset_Lower_Tier = 0;
+
+         find_X_Offsets();
+
          while (tmp_LL != NULL)
          {
              tmp_LL_Next = tmp_LL->Next;
-             tmp_LL->output_GUI(pge);
+
+             //Find center of large tier.
+             // Take that offset and minus half the current tier length
+             // Apply new X offset.
+             //std::cout << "\n NID: " << tmp_LL->NID.U << " (X_Offset " << X_Offset << " + Tier_X_Offsets[tmp_LL->Tier " << tmp_LL->Tier << "] " << Tier_X_Offsets[tmp_LL->Tier] << ")";
+             if (tmp_LL->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_LL->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+             tmp_LL->output_GUI(pge, Tier_X_Offsets[tmp_LL->Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
              tmp_LL = tmp_LL_Next;
          }
      }
