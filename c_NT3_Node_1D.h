@@ -79,7 +79,7 @@ public:
      virtual void bp_R()=0; //bp_Output the right node.
 
      virtual void set_Padding(int p_X_Padd, int p_Y_Padd)=0;
-     virtual void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_Color_Scheme = 0)=0;
+     virtual void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_X_MAX = 100, int p_Y_MAX = 100, int p_Color_Scheme = 0)=0;
 };
 
 //The normal node to use.
@@ -393,10 +393,9 @@ public:
      }
      
      //Outputs the node graphically based on XY through the olcPGE library.
-     void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_Color_Scheme = 0)
+     //Referenced in Node_Network, CAN, and now Charging Buffer.
+     void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_X_MAX = 100, int p_Y_MAX = 100, int p_Color_Scheme = 0)
      {
-
-
          olc::Pixel tmp_Pixel[2];
          double tmp_RC_Lvl = get_RC_Lvl();
 
@@ -421,40 +420,31 @@ public:
          //std::cout << "\n Pixel[0].a :" << int(tmp_Pixel[0].a);
          //std::cout << "\n Pixel[1].a :" << int(tmp_Pixel[1].a);
 
-         if ((p_X_Padd > 0) && (p_Y_Padd > 0))
+         int tmp_X[2] = { 0,0 };
+         tmp_X[0] = (X * p_X_Padd) + p_X_Offset;
+         tmp_X[1] = ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend);
+         int tmp_Y[2] = { 0,0 };
+         tmp_Y[0] = ((Y * p_Y_Padd) + p_Y_Offset);
+         tmp_Y[1] = ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset);
+
+         if ((tmp_X[0] > 0) && (tmp_Y[0] > 0))
          {
-             if (Dendrite_L != NULL)
+             if ((tmp_X[1] <= p_X_MAX) && (tmp_Y[1] <= p_Y_MAX))
              {
-                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset), tmp_Pixel[0]); }
-                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset), olc::GREEN); }
-             }
-             if (Dendrite_R != NULL)
-             {
-                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_R->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * p_Y_Padd) + p_Y_Offset), tmp_Pixel[1]); }
-                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset), ((Dendrite_R->X * p_X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * p_Y_Padd) + p_Y_Offset), olc::GREEN); }
-             }
-         }
-         else
-         {
-             if (Dendrite_L != NULL)
-             {
-                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_L->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * Y_Padd) + p_Y_Offset), tmp_Pixel[0]); }
-                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_L->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_L->Y * Y_Padd) + p_Y_Offset), olc::GREEN); }
-             }
-             if (Dendrite_R != NULL)
-             {
-                 if (p_Color_Scheme == 0) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_R->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * Y_Padd) + p_Y_Offset), tmp_Pixel[1]); }
-                 if (p_Color_Scheme == 1) { pge->DrawLine(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset), ((Dendrite_R->X * X_Padd) + p_X_Offset_Dend), ((Dendrite_R->Y * Y_Padd) + p_Y_Offset), olc::GREEN); }
+                 if (Dendrite_L != NULL)
+                 {
+                     if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[0]); }
+                     if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
+                 }
+                 if (Dendrite_R != NULL)
+                 {
+                     if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
+                     if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
+                 }
              }
          }
-         if ((p_X_Padd > 0) && (p_Y_Padd > 0))
-         {
-             pge->Draw(((X * p_X_Padd) + p_X_Offset), ((Y * p_Y_Padd) + p_Y_Offset));
-         }
-         else
-         {
-             pge->Draw(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset));
-         }
+
+         pge->Draw(tmp_X[0], tmp_Y[0]);
      }
 };
 
@@ -770,7 +760,7 @@ public:
 
 
      //Outputs the node graphically based on XY through the olcPGE library.
-     void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_Color_Scheme = 0)
+     void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_X_MAX = 100, int p_Y_MAX = 100, int p_Color_Scheme = 0)
      {
          if ((p_X_Padd > 0) && (p_Y_Padd > 0))
          {

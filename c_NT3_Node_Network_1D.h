@@ -39,6 +39,10 @@ public:
      int X_Padd;
      int Y_Padd;
 
+     //For determining whether or not to output a node.
+     int X_MAX;
+     int Y_MAX;
+
      double RC_Highest;
 
      c_NT3_Node_Network_1D()
@@ -52,6 +56,8 @@ public:
           Y_Offset = 0;
           X_Padd = 3;
           Y_Padd = 50;
+          X_MAX = 100;
+          Y_MAX = 100;
           Tier_Count_Biggest = 0;
           RC_Highest = 0;
           for (int cou_Index = 0; cou_Index < 1000; cou_Index++)
@@ -96,6 +102,9 @@ public:
      void set_PGE(olc::PixelGameEngine* p_PGE)
      {
          PGE = p_PGE;
+
+         X_MAX = PGE->ScreenWidth();
+         Y_MAX = PGE->ScreenHeight();
 
          //X_Offset = PGE->ScreenWidth() / 2;
      }
@@ -272,7 +281,7 @@ public:
 
           int tmp_X_Offset_Lower_Tier = 0;
           if ((*State_Tree.Current)->NID->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[(*State_Tree.Current)->NID->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-          (*State_Tree.Current)->NID->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
+          (*State_Tree.Current)->NID->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
           
           //Return the current node NID.
           return State_Tree.get_Current_Node_NID();
@@ -305,7 +314,7 @@ public:
           {
 
                 if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-                tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
+                tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
                 return tmp_Node;
           }
           
@@ -320,7 +329,7 @@ public:
           
           find_X_Offsets();
           if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-          tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
+          tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
 
           return tmp_Node;
      }
@@ -890,7 +899,7 @@ public:
              // Apply new X offset.
              //std::cout << "\n NID: " << tmp_LL->NID.U << " (X_Offset " << X_Offset << " + Tier_X_Offsets[tmp_LL->Tier " << tmp_LL->Tier << "] " << Tier_X_Offsets[tmp_LL->Tier] << ")";
              if (tmp_LL->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_LL->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-             tmp_LL->output_GUI(pge, Tier_X_Offsets[tmp_LL->Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, 0);
+             tmp_LL->output_GUI(pge, Tier_X_Offsets[tmp_LL->Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
              tmp_LL = tmp_LL_Next;
          }
      }
