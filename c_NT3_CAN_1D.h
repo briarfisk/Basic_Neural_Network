@@ -60,20 +60,34 @@ public:
      }
      
      //Builds full.
-     void Full()
+     void Full(int p_Build_Style = 0)
      {
-          resize();
-          fill_State();
-          //build_Tiers_Full();
-          build_Tiers_Full_Step_Setup();
+         resize();
+         fill_State(); 
+         if (p_Build_Style == 0)
+         {
+             build_Tiers_Full_Step_Setup();
+         }
+         if (p_Build_Style == 1)
+         {
+             build_Tiers_Full();
+         }
+
      }
      
      //Builds full with RC reinforcing.
-     void RC()
+     void RC(int p_Build_Style = 0)
      {
           resize();
           fill_State();
-          build_Tiers_Full_Step_Setup();
+          if (p_Build_Style == 0)
+          {
+              build_Tiers_Full_Step_Setup();
+          }
+          if (p_Build_Style == 1)
+          {
+              build_Tiers_Full();
+          }
           reinforce();
      }
      
@@ -111,8 +125,7 @@ public:
           {
                for (int cou_Index=0;cou_Index<((Number_Of_Tiers - cou_T) - 1);cou_Index++)
                {
-                    CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1], (cou_T + 1));
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    CAN[cou_T + 1] [cou_Index] = Nodes->get_Upper_Tier_Connection(CAN[cou_T] [cou_Index], CAN[cou_T] [cou_Index + 1], (cou_T + 1), 1);
                }
           }
           
@@ -129,7 +142,7 @@ public:
           reinforce();
      }
 
-     bool flg_Is_Idle;
+     int flg_Is_Idle;
      int Current_Fill_Tier;
      int Current_Fill_Index;
 
@@ -142,9 +155,9 @@ public:
 
      void check_RC(double p_RC)
      {
-         if (Nodes->RC_Highest < p_RC)
+         if (Nodes->XY_Kernel.Highest_RC < p_RC)
          {
-             Nodes->RC_Highest = p_RC;
+             Nodes->XY_Kernel.Highest_RC = p_RC;
          }
      }
 

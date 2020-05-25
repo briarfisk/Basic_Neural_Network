@@ -1,12 +1,174 @@
 #include "olcPixelGameEngine.h"
 
+
+//This class holds the info for positioning of the network.
+//Allows for output without calling the explicit GUI output.
+class c_NT3_XY_Kernel
+{
+private:
+
+    friend class c_NT3_Node_Network_1D;
+    friend class c_NT3_Base_Node;
+
+
+public:
+
+    //The padding for the output.
+    int X_Padd;
+    int Y_Padd;
+
+    int X_Offset;
+    int Y_Offset;
+
+    int X_MAX;
+    int Y_MAX;
+
+    double Highest_RC;
+
+    olc::PixelGameEngine* PGE;
+
+    int Highest_Tier;
+    int Tier_Count[1000];
+    int Tier_X_Offsets[1000];
+    int Tier_Count_Biggest;
+
+
+
+    c_NT3_XY_Kernel()
+    {
+        Highest_Tier = 0;
+        PGE = NULL;
+        X_Offset = 0;
+        Y_Offset = 0;
+        X_Padd = 1;
+        Y_Padd = 30;
+        X_MAX = 100;
+        Y_MAX = 100;
+        Tier_Count_Biggest = 0;
+        Highest_RC = 0;
+        for (int cou_Index = 0; cou_Index < 1000; cou_Index++)
+        {
+            Tier_Count[cou_Index] = 0;
+            Tier_X_Offsets[cou_Index] = 0;
+        }
+    }
+
+    //Sets the pixel game engine object reference.
+    void set_PGE(olc::PixelGameEngine* p_PGE)
+    {
+        PGE = p_PGE;
+
+        X_MAX = PGE->ScreenWidth();
+        Y_MAX = PGE->ScreenHeight();
+    }
+
+    int get_Highest_RC()
+    {
+        return Highest_RC;
+    }
+
+    int set_Highest_RC(int p_Highest_RC)
+    {
+        Highest_RC = p_Highest_RC;
+    }
+
+
+
+    int X_Offset_Less(int p_Increment)
+    {
+        return X_Offset -= p_Increment;
+    }
+    int X_Offset_More(int p_Increment)
+    {
+        return X_Offset += p_Increment;
+    }
+    int Y_Offset_Less(int p_Increment)
+    {
+        return Y_Offset -= p_Increment;
+    }
+    int Y_Offset_More(int p_Increment)
+    {
+        return Y_Offset += p_Increment;
+    }
+
+
+    int X_Padd_Less(int p_Increment)
+    {
+        return X_Padd -= p_Increment;
+    }
+    int X_Padd_More(int p_Increment)
+    {
+        return X_Padd += p_Increment;
+    }
+    int Y_Padd_Less(int p_Increment)
+    {
+        return Y_Padd -= p_Increment;
+    }
+    int Y_Padd_More(int p_Increment)
+    {
+        return Y_Padd += p_Increment;
+    }
+    
+    //Find the center of the largest tier.
+    //Finds offsets.
+    void find_X_Offsets()
+    {
+        Tier_Count_Biggest = 0;
+        for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
+        {
+            if (Tier_Count[cou_Index] > Tier_Count_Biggest) { Tier_Count_Biggest = Tier_Count[cou_Index]; }
+        }
+        //std::cout << "\n\n X_Largest: " << Tier_Count_Biggest;
+
+        for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
+        {
+            Tier_X_Offsets[cou_Index] = (Tier_Count_Biggest / 2) - (Tier_Count[cou_Index] / 2);
+            //std::cout << "\n\n " << cou_Index << ":: " << Tier_X_Offsets[cou_Index];
+            Tier_X_Offsets[cou_Index] = (X_Offset + (Tier_X_Offsets[cou_Index] * X_Padd));
+        }
+
+    }
+
+    void center_Screen()
+    {
+        Tier_Count_Biggest = 0;
+        for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
+        {
+            if (Tier_Count[cou_Index] > Tier_Count_Biggest) { Tier_Count_Biggest = Tier_Count[cou_Index]; }
+        }
+        //Center to screen.
+        // 1/2 of the screen width minus one half the current rows width.
+        int tmp_Center_Offset = PGE->ScreenWidth() / 2;
+
+        X_Offset = tmp_Center_Offset - (Tier_Count_Biggest / 2);
+
+        for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
+        {
+            Tier_X_Offsets[cou_Index] = (Tier_Count_Biggest / 2) - (Tier_Count[cou_Index] / 2);
+            //std::cout << "\n\n " << cou_Index << ":: " << Tier_X_Offsets[cou_Index];
+            Tier_X_Offsets[cou_Index] = (X_Offset + (Tier_X_Offsets[cou_Index] * X_Padd));
+        }
+    }
+    void set_Padding(int p_X_Padd, int p_Y_Padd)
+    {
+        X_Padd = p_X_Padd;
+        Y_Padd = p_Y_Padd;
+    }
+};
+
+
 //The basic polymorphic node to use for the node network.
 class c_NT3_Base_Node_1D
 {
 public:
      
+    friend class c_NT3_XY_Kernel;
+
      virtual ~c_NT3_Base_Node_1D(){};
      
+     //This is a reference to the network that owns this node. Allows for drawing on params like MAX_X and X_Padd
+     c_NT3_XY_Kernel* XY_Kernel;
+
      //The ID of this node.
      u_Data_3 NID;
      
@@ -40,11 +202,11 @@ public:
      int X;
      int Y;
 
-     //The padding for the output.
-     int X_Padd;
-     int Y_Padd;
+     double Current_Charge;
      
      //Member Functions.
+     virtual void set_XY_Kernel(c_NT3_XY_Kernel* p_XY_Kernel = 0)=0;
+
      virtual void set_Tier(int p_Tier)=0;
 
      virtual void add_Axon_L(c_NT3_Base_Node_1D * p_Axon)=0; //Adds an axon on the left leg.
@@ -78,8 +240,10 @@ public:
      virtual void bp_L()=0; //bp_Output the left node.
      virtual void bp_R()=0; //bp_Output the right node.
 
-     virtual void set_Padding(int p_X_Padd, int p_Y_Padd)=0;
      virtual void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_X_MAX = 100, int p_Y_MAX = 100, int p_Color_Scheme = 0)=0;
+     virtual void output_GUI(int p_Color_Scheme = 0)=0;
+
+     virtual void charge(double p_Charge, double p_APT)=0; //Charge recursively the old way. Will cause issues with enough nodes.
 };
 
 //The normal node to use.
@@ -91,7 +255,7 @@ public:
      {
           //The next node.
           Next = NULL;
-          
+
           //Axons and their counters.
           Axons_L = NULL;
           Axon_Count_L = 0;
@@ -115,8 +279,10 @@ public:
 
           X = 0;
           Y = 0;
-          X_Padd = 4;
-          Y_Padd = 40;
+
+          XY_Kernel = NULL;
+
+          Current_Charge = 0.0;
      }
      
      ~c_NT3_Node_1D()
@@ -163,6 +329,17 @@ public:
      
      //==--  Member Functions.
      
+     //Sets the NNet
+     void set_XY_Kernel(c_NT3_XY_Kernel * p_XY_Kernel)
+     {
+         if (XY_Kernel != NULL)
+         {
+             delete XY_Kernel;
+             XY_Kernel = NULL;
+         }
+         XY_Kernel = p_XY_Kernel;
+     }
+
      //Sets the tier.
      void set_Tier(int p_Tier)
      {
@@ -386,11 +563,7 @@ public:
           }
      }
 
-     void set_Padding(int p_X_Padd, int p_Y_Padd)
-     {
-         X_Padd = p_X_Padd;
-         Y_Padd = p_Y_Padd;
-     }
+
      
      //Outputs the node graphically based on XY through the olcPGE library.
      //Referenced in Node_Network, CAN, and now Charging Buffer.
@@ -399,7 +572,7 @@ public:
          olc::Pixel tmp_Pixel[2];
          double tmp_RC_Lvl = get_RC_Lvl();
 
-         if (p_HRC > 7) { p_HRC = 7; }
+         if (p_HRC > 40) { p_HRC = 40; }
 
          tmp_Pixel[0].a = char((tmp_RC_Lvl / p_HRC) * 250);
 
@@ -422,29 +595,118 @@ public:
 
          int tmp_X[2] = { 0,0 };
          tmp_X[0] = (X * p_X_Padd) + p_X_Offset;
-         tmp_X[1] = ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend);
          int tmp_Y[2] = { 0,0 };
          tmp_Y[0] = ((Y * p_Y_Padd) + p_Y_Offset);
-         tmp_Y[1] = ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset);
 
-         if ((tmp_X[0] > 0) && (tmp_Y[0] > 0))
+         if (((tmp_X[0] > 0) && (tmp_Y[0] > 0)) || ((tmp_X[1] <= p_X_MAX) && (tmp_Y[1] <= p_Y_MAX)))
          {
-             if ((tmp_X[1] <= p_X_MAX) && (tmp_Y[1] <= p_Y_MAX))
+             if (Dendrite_L != NULL)
              {
-                 if (Dendrite_L != NULL)
-                 {
-                     if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[0]); }
-                     if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
-                 }
-                 if (Dendrite_R != NULL)
-                 {
-                     if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
-                     if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
-                 }
+                 tmp_X[1] = ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend);
+                 tmp_Y[1] = ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset);
+
+                 if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
+                 if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
              }
+             if (Dendrite_R != NULL)
+             {
+                 tmp_X[1] = ((Dendrite_R->X * p_X_Padd) + p_X_Offset_Dend);
+                 tmp_Y[1] = ((Dendrite_R->Y * p_Y_Padd) + p_Y_Offset);
+
+                 if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
+                 if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
+             }
+             pge->Draw(tmp_X[0], tmp_Y[0]);
          }
 
-         pge->Draw(tmp_X[0], tmp_Y[0]);
+     }
+
+     //Outputs the node graphically based on XY through the olcPGE library.
+    //Referenced in Node_Network, CAN, and now Charging Buffer.
+     //void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_X_MAX = 100, int p_Y_MAX = 100, int p_Color_Scheme = 0)
+     void output_GUI(int p_Color_Scheme = 0)
+     {
+         olc::Pixel tmp_Pixel[2];
+         double tmp_RC_Lvl = get_RC_Lvl();
+
+         int tmp_Highest_RC = XY_Kernel->get_Highest_RC();
+
+         if (tmp_Highest_RC > 40) { tmp_Highest_RC = 40; }
+
+         tmp_Pixel[0].a = char((tmp_RC_Lvl / tmp_Highest_RC) * 250);
+
+         if ((tmp_RC_Lvl / tmp_Highest_RC) > 1.0) { tmp_Pixel[0].a = 255; }
+
+         tmp_Pixel[1].a = tmp_Pixel[0].a;
+         if ((unsigned int)(tmp_Pixel[1].a) > 255) { tmp_Pixel[1].a = 255; }
+
+         //std::cout << "\n char((tmp_RC_Lvl: " << tmp_RC_Lvl << " / p_HRC: " << p_HRC << "): " << (tmp_RC_Lvl / p_HRC) << " * 250): " << unsigned int(char((get_RC_Lvl() / p_HRC) * 250));
+
+         tmp_Pixel[0].r = 255;
+         tmp_Pixel[0].g = 255;
+         tmp_Pixel[0].b = 255;
+
+         tmp_Pixel[1].r = 0;
+         tmp_Pixel[1].g = 255;
+         tmp_Pixel[1].b = 0;
+         //std::cout << "\n Pixel[0].a :" << int(tmp_Pixel[0].a);
+         //std::cout << "\n Pixel[1].a :" << int(tmp_Pixel[1].a);
+
+         int tmp_X[2] = { 0,0 };
+         tmp_X[0] = (X * XY_Kernel->X_Padd) + XY_Kernel->X_Offset;
+         int tmp_Y[2] = { 0,0 };
+         tmp_Y[0] = ((Y * XY_Kernel->Y_Padd) + XY_Kernel->Y_Offset);
+
+         if (((tmp_X[0] > 0) && (tmp_Y[0] > 0)) || ((tmp_X[1] <= XY_Kernel->X_MAX) && (tmp_Y[1] <= XY_Kernel->Y_MAX)))
+         {
+             if (Dendrite_L != NULL)
+             {
+                 tmp_X[1] = ((Dendrite_L->X * XY_Kernel->X_Padd) + XY_Kernel->Tier_X_Offsets[Tier - 1]); 
+                 tmp_Y[1] = ((Dendrite_L->Y * XY_Kernel->Y_Padd) + XY_Kernel->Y_Offset);
+
+                 if (p_Color_Scheme == 0) { XY_Kernel->PGE->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
+                 if (p_Color_Scheme == 1) { XY_Kernel->PGE->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::BLUE); }
+             }
+             if (Dendrite_R != NULL)
+             {
+                 tmp_X[1] = ((Dendrite_R->X * XY_Kernel->X_Padd) + XY_Kernel->Tier_X_Offsets[Tier - 1]);
+                 tmp_Y[1] = ((Dendrite_R->Y * XY_Kernel->Y_Padd) + XY_Kernel->Y_Offset);
+
+                 if (p_Color_Scheme == 0) { XY_Kernel->PGE->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
+                 if (p_Color_Scheme == 1) { XY_Kernel->PGE->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::BLUE); }
+             }
+             XY_Kernel->PGE->Draw(tmp_X[0], tmp_Y[0]);
+         }
+
+     }
+
+     void charge(double p_Charge, double p_APT)
+     {
+         Current_Charge += p_Charge;
+
+         if (Type == 2 || Type == 3)
+         {
+             //std::cout << "\n Current_Charge: " << Current_Charge;
+             //bp_O();
+         }
+         else
+         {
+             if (Current_Charge > p_APT)
+             {
+                 for (int cou_A = 0; cou_A < Axon_Count_L; cou_A++)
+                 {
+                     Axons_L[cou_A]->charge((Current_Charge * .5), p_APT);
+                 }
+                 for (int cou_A = 0; cou_A < Axon_Count_R; cou_A++)
+                 {
+                     Axons_R[cou_A]->charge((Current_Charge * .5), p_APT);
+                 }
+
+
+                 output_GUI(1);
+                 Current_Charge == 0.0;
+             }
+         }
      }
 };
 
@@ -462,6 +724,9 @@ public:
      {
           State.I = 0;
           
+          //Node network.
+          XY_Kernel = NULL;
+
           //The linked list.
           Next = NULL;
           
@@ -486,8 +751,6 @@ public:
 
           X = 0;
           Y = 0;
-          X_Padd = 4;
-          Y_Padd = 40;
      }
      
      ~c_NT3_State_Node_1D()
@@ -528,6 +791,17 @@ public:
      
      
      //==--  Member Functions.
+
+     //Sets the NNet
+     void set_XY_Kernel(c_NT3_XY_Kernel* p_XY_Kernel)
+     {
+         if (XY_Kernel != NULL)
+         {
+             delete XY_Kernel;
+             XY_Kernel = NULL;
+         }
+         XY_Kernel = p_XY_Kernel;
+     }
 
      //Sets the tier.
      void set_Tier(int p_Tier)
@@ -752,13 +1026,7 @@ public:
           }
      }
 
-     void set_Padding(int p_X_Padd, int p_Y_Padd)
-     {
-         X_Padd = p_X_Padd;
-         Y_Padd = p_Y_Padd;
-     }
-
-
+     
      //Outputs the node graphically based on XY through the olcPGE library.
      void output_GUI(olc::PixelGameEngine* pge, int p_X_Offset = 0, int p_X_Offset_Dend = 0, int p_Y_Offset = 0, int p_X_Padd = 0, int p_Y_Padd = 0, double p_HRC = 0.0, int p_X_MAX = 100, int p_Y_MAX = 100, int p_Color_Scheme = 0)
      {
@@ -768,7 +1036,7 @@ public:
          }
          else
          {
-             pge->Draw(((X * X_Padd) + p_X_Offset), ((Y * Y_Padd) + p_Y_Offset));
+             pge->Draw(((X * XY_Kernel->X_Padd) + p_X_Offset), ((Y * XY_Kernel->Y_Padd) + p_Y_Offset));
          }
          /*
          for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
@@ -782,5 +1050,52 @@ public:
          }
          */
 
+     }
+     
+     //Outputs the node graphically based on XY through the olcPGE library.
+     void output_GUI(int p_Color_Scheme)
+     {
+         XY_Kernel->PGE->Draw(((X * XY_Kernel->X_Padd) + XY_Kernel->X_Offset), ((Y * XY_Kernel->Y_Padd) + XY_Kernel->Y_Offset));
+         /*
+         for (int cou_AL = 0; cou_AL < Axon_Count_L; cou_AL++)
+         {
+             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Axons_L[cou_AL]->X * X_Padd), (Axons_L[cou_AL]->Y * Y_Padd), olc::BLUE);
+         }
+
+         for (int cou_AR = 0; cou_AR < Axon_Count_R; cou_AR++)
+         {
+             pge->DrawLine((X * X_Padd), (Y * Y_Padd), (Axons_R[cou_AR]->X * X_Padd), (Axons_R[cou_AR]->Y * Y_Padd), olc::RED);
+         }
+         */
+
+     }
+
+
+     void charge(double p_Charge, double p_APT)
+     {
+         Current_Charge += p_Charge;
+
+         while (Current_Charge > p_APT)
+         {
+             for (int cou_A = 0; cou_A < Axon_Count_L; cou_A++)
+             {
+                 Axons_L[cou_A]->charge(1.0, p_APT);
+             }
+             for (int cou_A = 0; cou_A < Axon_Count_R; cou_A++)
+             {
+                 Axons_R[cou_A]->charge(1.0, p_APT);
+             }
+
+             if (Type == 2 || Type == 3)
+             {
+                 std::cout << "\n Current_Charge: " << Current_Charge;
+                 bp_O();
+             }
+
+             output_GUI(1);
+
+             Current_Charge -= 1.0;
+             if (Current_Charge < 0) { Current_Charge = 0.0; }
+         }
      }
 };

@@ -5,6 +5,8 @@ class c_NT3_Node_Network_1D
 {
 private:
      
+    friend class c_NT3_XY_Kernel;
+
 public:
      
      //The one that started it all.
@@ -26,6 +28,10 @@ public:
      //Only used during saving and loading, then it is destroyed to save memory.
      c_NT3_Fractal_State_Tree NID_Tree;
 
+     //The class that replaces the collection of variables for node output.
+     c_NT3_XY_Kernel XY_Kernel;
+
+     /*
      int Highest_Tier;
      int Tier_Count[1000];
      int Tier_X_Offsets[1000];
@@ -43,28 +49,14 @@ public:
      int X_MAX;
      int Y_MAX;
 
-     double RC_Highest;
+     double Highest_RC;
+     */
 
      c_NT3_Node_Network_1D()
      {
           CNID.I = 0;
           Root = NULL;
           Current_Node = &Root;
-          Highest_Tier = 0;
-          PGE = NULL;
-          X_Offset = 0;
-          Y_Offset = 0;
-          X_Padd = 3;
-          Y_Padd = 50;
-          X_MAX = 100;
-          Y_MAX = 100;
-          Tier_Count_Biggest = 0;
-          RC_Highest = 0;
-          for (int cou_Index = 0; cou_Index < 1000; cou_Index++)
-          {
-              Tier_Count[cou_Index] = 0;
-              Tier_X_Offsets[cou_Index] = 0;
-          }
 
      }
      
@@ -101,11 +93,7 @@ public:
      //Sets the pixel game engine object reference.
      void set_PGE(olc::PixelGameEngine* p_PGE)
      {
-         PGE = p_PGE;
-
-         X_MAX = PGE->ScreenWidth();
-         Y_MAX = PGE->ScreenHeight();
-
+         XY_Kernel.set_PGE(p_PGE);
          //X_Offset = PGE->ScreenWidth() / 2;
      }
      
@@ -136,14 +124,13 @@ public:
           (*Current_Node)->set_State(p_State);
 
           //Set the XY
-          (*Current_Node)->X = Tier_Count[p_Tier];
+          (*Current_Node)->set_XY_Kernel(&XY_Kernel);
+          (*Current_Node)->X = XY_Kernel.Tier_Count[p_Tier];
           (*Current_Node)->Y = p_Tier;
-          (*Current_Node)->X_Padd = X_Padd;
-          (*Current_Node)->Y_Padd = Y_Padd;
           (*Current_Node)->Tier = p_Tier;
 
-          Tier_Count[p_Tier]++;
-          if (Highest_Tier <= p_Tier) { Highest_Tier = p_Tier + 1; }
+          XY_Kernel.Tier_Count[p_Tier]++;
+          if (XY_Kernel.Highest_Tier <= p_Tier) { XY_Kernel.Highest_Tier = p_Tier + 1; }
           
           //Set the Current node to the next one in the chain.
           Current_Node = &(*Current_Node)->Next;
@@ -173,12 +160,13 @@ public:
           if (p_A_R){ (*Current_Node)->expand_Axon_R(p_A_R); }
 
           //Set the XY
-          (*Current_Node)->X = Tier_Count[p_Tier];
+          (*Current_Node)->set_XY_Kernel(&XY_Kernel);
+          (*Current_Node)->X = XY_Kernel.Tier_Count[p_Tier];
           (*Current_Node)->Y = p_Tier;
           (*Current_Node)->Tier = p_Tier;
 
-          Tier_Count[p_Tier]++;
-          if (Highest_Tier <= p_Tier) { Highest_Tier = p_Tier + 1; }
+          XY_Kernel.Tier_Count[p_Tier]++;
+          if (XY_Kernel.Highest_Tier <= p_Tier) { XY_Kernel.Highest_Tier = p_Tier + 1; }
 
           //Set the Current node to the next one in the chain.
           Current_Node = &(*Current_Node)->Next;
@@ -280,8 +268,8 @@ public:
           }
 
           int tmp_X_Offset_Lower_Tier = 0;
-          if ((*State_Tree.Current)->NID->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[(*State_Tree.Current)->NID->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-          (*State_Tree.Current)->NID->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
+          if ((*State_Tree.Current)->NID->Tier > 0) { tmp_X_Offset_Lower_Tier = XY_Kernel.Tier_X_Offsets[(*State_Tree.Current)->NID->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+          (*State_Tree.Current)->NID->output_GUI(XY_Kernel.PGE, XY_Kernel.Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, XY_Kernel.Y_Offset, XY_Kernel.X_Padd, XY_Kernel.Y_Padd, XY_Kernel.Highest_RC, XY_Kernel.X_MAX, XY_Kernel.Y_MAX, 0);
           
           //Return the current node NID.
           return State_Tree.get_Current_Node_NID();
@@ -298,7 +286,7 @@ public:
      }
      
      //Gets an upper tier connection even if one has to be created.
-     c_NT3_Base_Node_1D * get_Upper_Tier_Connection(c_NT3_Base_Node_1D * p_L, c_NT3_Base_Node_1D * p_R, int p_Tier)
+     c_NT3_Base_Node_1D * get_Upper_Tier_Connection(c_NT3_Base_Node_1D * p_L, c_NT3_Base_Node_1D * p_R, int p_Tier, int p_Silent_Mode = 0)
      {
           //If either submitted node is NULL then return NULL.
           if (p_L == NULL || p_R == NULL){ return NULL; }
@@ -313,8 +301,8 @@ public:
           if (tmp_Node != NULL)
           {
 
-                if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-                tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
+                if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = XY_Kernel.Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+                if (!p_Silent_Mode) { tmp_Node->output_GUI(XY_Kernel.PGE, XY_Kernel.Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, XY_Kernel.Y_Offset, XY_Kernel.X_Padd, XY_Kernel.Y_Padd, XY_Kernel.Highest_RC, XY_Kernel.X_MAX, XY_Kernel.Y_MAX, 0); }
                 return tmp_Node;
           }
           
@@ -328,8 +316,8 @@ public:
           p_R->add_Axon_R(tmp_Node);
           
           find_X_Offsets();
-          if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-          tmp_Node->output_GUI(PGE, Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
+          if (tmp_Node->Tier > 0) { tmp_X_Offset_Lower_Tier = XY_Kernel.Tier_X_Offsets[tmp_Node->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+          if (!p_Silent_Mode) { tmp_Node->output_GUI(XY_Kernel.PGE, XY_Kernel.Tier_X_Offsets[p_Tier], tmp_X_Offset_Lower_Tier, XY_Kernel.Y_Offset, XY_Kernel.X_Padd, XY_Kernel.Y_Padd, XY_Kernel.Highest_RC, XY_Kernel.X_MAX, XY_Kernel.Y_MAX, 0); }
 
           return tmp_Node;
      }
@@ -811,75 +799,64 @@ public:
      //Outputs all of the nodes.
      void output_Nodes_Stats()
      {
-         ostr(0, 13, "\n Number Of Tiers: "); std::cout << Highest_Tier;
+         ostr(0, 13, "\n Number Of Tiers: "); std::cout << XY_Kernel.Highest_Tier;
          long long int tmp_Count = 0;
-         for (int cou_T = 0; cou_T < Highest_Tier; cou_T++)
+         for (int cou_T = 0; cou_T < XY_Kernel.Highest_Tier; cou_T++)
          {
-             ostr(0, 7, "\n --Tier_Count["); std::cout << cou_T; ostr(0, 7, "]: "); std::cout << Tier_Count[cou_T];
-             tmp_Count += Tier_Count[cou_T];
+             ostr(0, 7, "\n --Tier_Count["); std::cout << cou_T; ostr(0, 7, "]: "); std::cout << XY_Kernel.Tier_Count[cou_T];
+             tmp_Count += XY_Kernel.Tier_Count[cou_T];
          }
          ostr(0, 15, "\n\n Total Node Count: "); std::cout << tmp_Count;
      }
 
 
-     void X_Offset_Less(int p_Increment)
+     int X_Offset_Less(int p_Increment)
      {
-         X_Offset -= p_Increment;
+         return XY_Kernel.X_Offset_Less(p_Increment);
      }
-     void X_Offset_More(int p_Increment)
+     int X_Offset_More(int p_Increment)
      {
-         X_Offset += p_Increment;
+         return XY_Kernel.X_Offset_More(p_Increment);
      }
-     void Y_Offset_Less(int p_Increment)
+     int Y_Offset_Less(int p_Increment)
      {
-         Y_Offset -= p_Increment;
+         return XY_Kernel.Y_Offset_Less(p_Increment);
      }
-     void Y_Offset_More(int p_Increment)
+     int Y_Offset_More(int p_Increment)
      {
-         Y_Offset += p_Increment;
-     }
-
-
-     void X_Padd_Less(int p_Increment)
-     {
-         X_Padd -= p_Increment;
-     }
-     void X_Padd_More(int p_Increment)
-     {
-         X_Padd += p_Increment;
-     }
-     void Y_Padd_Less(int p_Increment)
-     {
-         Y_Padd -= p_Increment;
-     }
-     void Y_Padd_More(int p_Increment)
-     {
-         Y_Padd += p_Increment;
+         return XY_Kernel.Y_Offset_More(p_Increment);
      }
 
-     //Find the center of the largest tier.
-     //Finds offsets.
+
+     int X_Padd_Less(int p_Increment)
+     {
+         return XY_Kernel.X_Padd_Less(p_Increment);
+     }
+     int X_Padd_More(int p_Increment)
+     {
+         return XY_Kernel.X_Padd_More(p_Increment);
+     }
+     int Y_Padd_Less(int p_Increment)
+     {
+         return XY_Kernel.Y_Padd_Less(p_Increment);
+     }
+     int Y_Padd_More(int p_Increment)
+     {
+         return XY_Kernel.Y_Padd_More(p_Increment);
+     }
+
+     void center_Screen()
+     {
+         XY_Kernel.center_Screen();
+     }
+
      void find_X_Offsets()
      {
-         Tier_Count_Biggest = 0;
-         for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
-         {
-             if (Tier_Count[cou_Index] > Tier_Count_Biggest) { Tier_Count_Biggest = Tier_Count[cou_Index]; }
-         }
-         //std::cout << "\n\n X_Largest: " << Tier_Count_Biggest;
-
-         for (int cou_Index = 0; cou_Index < Highest_Tier; cou_Index++)
-         {
-             Tier_X_Offsets[cou_Index] = (Tier_Count_Biggest / 2) - (Tier_Count[cou_Index] / 2); 
-             //std::cout << "\n\n " << cou_Index << ":: " << Tier_X_Offsets[cou_Index];
-             Tier_X_Offsets[cou_Index] = (X_Offset + (Tier_X_Offsets[cou_Index] * X_Padd));
-         }
-
+         XY_Kernel.find_X_Offsets();
      }
 
-
      //Outputs all of the nodes graphically.
-     void output_Nodes_GUI(olc::PixelGameEngine* pge)
+     void output_Nodes_GUI(olc::PixelGameEngine* p_PGE)
      {
          c_NT3_Base_Node_1D* tmp_LL = Root;
          //Root = NULL;
@@ -888,7 +865,7 @@ public:
 
          int tmp_X_Offset_Lower_Tier = 0;
 
-         find_X_Offsets();
+         XY_Kernel.find_X_Offsets();
 
          while (tmp_LL != NULL)
          {
@@ -898,8 +875,8 @@ public:
              // Take that offset and minus half the current tier length
              // Apply new X offset.
              //std::cout << "\n NID: " << tmp_LL->NID.U << " (X_Offset " << X_Offset << " + Tier_X_Offsets[tmp_LL->Tier " << tmp_LL->Tier << "] " << Tier_X_Offsets[tmp_LL->Tier] << ")";
-             if (tmp_LL->Tier > 0) { tmp_X_Offset_Lower_Tier = Tier_X_Offsets[tmp_LL->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
-             tmp_LL->output_GUI(pge, Tier_X_Offsets[tmp_LL->Tier], tmp_X_Offset_Lower_Tier, Y_Offset, X_Padd, Y_Padd, RC_Highest, X_MAX, Y_MAX, 0);
+             if (tmp_LL->Tier > 0) { tmp_X_Offset_Lower_Tier = XY_Kernel.Tier_X_Offsets[tmp_LL->Tier - 1]; } else { tmp_X_Offset_Lower_Tier = 0; }
+             tmp_LL->output_GUI(p_PGE, XY_Kernel.Tier_X_Offsets[tmp_LL->Tier], tmp_X_Offset_Lower_Tier, XY_Kernel.Y_Offset, XY_Kernel.X_Padd, XY_Kernel.Y_Padd, XY_Kernel.Highest_RC, XY_Kernel.X_MAX, XY_Kernel.Y_MAX, 0);
              tmp_LL = tmp_LL_Next;
          }
      }

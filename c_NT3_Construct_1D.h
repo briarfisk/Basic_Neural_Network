@@ -1,4 +1,5 @@
 #include "olcPixelGameEngine.h"
+#include "c_NT3_Buffer.h"
 
 //The construct class.
 class c_NT3_Construct_1D: public c_NT3_Base_Construct
@@ -348,7 +349,67 @@ public:
           }
      }
      
+     int Eval_Setup_Step()
+     {
+         reset_Outputs();
+         Current_Input = 0;
+
+         if (tbl_Input.Number_Of_Rows == 0) { return CAN.flg_Is_Idle; }
+
+         Current_Input = 0;
+
+         Build_Input_Query(0);
+
+         if (settings_Tier_Is_Floating)
+         {
+             settings_Tier = (Input_Depth * settings_Tier_Depth);
+             //*std::cout << "\n " << Name << " settings_Tier->" << settings_Tier << " = Input_Depth->" << Input_Depth << " * " << settings_Tier_Depth;
+         }
+
+         init_Charging_Buffer_C();
+
+         return CAN.flg_Is_Idle;
+     }
      
+     //Eval with no RC.
+     int Eval_Step()
+     {
+         //if (CAN.flg_Is_Charging == 1)
+         {
+             //charge_Buffer_Step();
+         }
+         //if (CAN.flg_Is_Charging == 2)
+         {
+             //discharge_Treetops_Step();
+         }
+
+         //return CAN.flg_Is_Idle;
+         return CAN.flg_Is_Idle;
+     }
+
+     //Evals with the live firing method.
+     void Eval_LF()
+     {
+         reset_Outputs();
+         Current_Input = 0;
+
+         if (tbl_Input.Number_Of_Rows == 0) { return; }
+
+         for (int cou_Cell = 0; cou_Cell < tbl_Input.Rows[0]->Depth; cou_Cell++)
+         {
+             Current_Input = cou_Cell;
+
+             Build_Input_Query(cou_Cell);
+
+             if (settings_Tier_Is_Floating)
+             {
+                 settings_Tier = (Input_Depth * settings_Tier_Depth);
+                 //*std::cout << "\n " << Name << " settings_Tier->" << settings_Tier << " = Input_Depth->" << Input_Depth << " * " << settings_Tier_Depth;
+             }
+
+             charge_Livefire();
+         }
+     }
 
      //Sets the charging buffers up for each input.
      void init_Charging_Buffer_C()
@@ -502,37 +563,7 @@ public:
           }
      }
      
-     //Charges a single buffer.
-     void charge_Buffer_C()
-     {
-          Charging_Buffers[0].Input_Position = 0;
-          
-          for (int cou_T=settings_Tier;cou_T<Input_Depth;cou_T++)
-          {    
-               Charging_Buffers[0].charge_Outputs(setting_Charge_Spike);
-               
-               for (int cou_Index=0;cou_Index<(Input_Depth - cou_T);cou_Index++)
-               {
-                    if (CAN.CAN[cou_T] [cou_Index] != NULL)
-                    {
-                         Charging_Buffers[0].submit(CAN.CAN[cou_T] [cou_Index], (settings_Base_Charge));
-                    }
-               }
-               
-               Charging_Buffers[0].gather();
-               
-               if (!Charging_Buffers[0].flg_Not_Done){ break; }
-               
-          }
-          
-          while(Charging_Buffers[0].flg_Not_Done)
-          {
-               Charging_Buffers[0].charge_Outputs(setting_Charge_Spike);
-               
-               Charging_Buffers[0].gather();
-          }
-     }
-     
+
      //Charges a single buffer.
      void charge_Buffer_L(int p_Input)
      {
@@ -695,9 +726,56 @@ public:
           }
      }
      
+     //Charges a single buffer.
+     void charge_Buffer_C()
+     {
+         Charging_Buffers[0].Input_Position = 0;
+
+         for (int cou_T = settings_Tier; cou_T < Input_Depth; cou_T++)
+         {
+             Charging_Buffers[0].charge_Outputs(setting_Charge_Spike);
+
+             for (int cou_Index = 0; cou_Index < (Input_Depth - cou_T); cou_Index++)
+             {
+                 if (CAN.CAN[cou_T][cou_Index] != NULL)
+                 {
+                     Charging_Buffers[0].submit(CAN.CAN[cou_T][cou_Index], (settings_Base_Charge));
+                 }
+             }
+
+             Charging_Buffers[0].gather();
+
+             if (!Charging_Buffers[0].flg_Not_Done) { break; }
+
+         }
+
+         while (Charging_Buffers[0].flg_Not_Done)
+         {
+             Charging_Buffers[0].charge_Outputs(setting_Charge_Spike);
+
+             Charging_Buffers[0].gather();
+         }
+     }
 
      
-     
+     //Charges the networks the old live fire way. Should make for much better output.
+     void charge_Livefire()
+     {
+         std::cout << "\n Charging...";
+         for (int cou_T = settings_Tier; cou_T < Input_Depth; cou_T++)
+         {
+             std::cout << "\n Tier[" << cou_T << "]";
+             for (int cou_Index = 0; cou_Index < (Input_Depth - cou_T); cou_Index++)
+             {
+                 std::cout << ".";
+                 if (CAN.CAN[cou_T][cou_Index] != NULL)
+                 {
+                     CAN.CAN[cou_T][cou_Index]->charge(2.0, 0.5);
+                 }
+             }
+         }
+     }
+
      //Gathers the output for the left vision table.
      void gather_Vision_L()
      {
@@ -841,7 +919,7 @@ public:
      }
      
      //Builds RC CAN.
-     void Build_RC()
+     void Build_RC(int p_Build_Style = 0)
      {
           if (tbl_Input.Number_Of_Rows == 0){ return; }
           
@@ -849,7 +927,7 @@ public:
           
           for (int cou_Cell=0;cou_Cell<tbl_Input.Rows[0]->Depth;cou_Cell++)
           {
-               Build_Input_RC(cou_Cell);
+               Build_Input_RC(cou_Cell, p_Build_Style);
           }
      }
      
@@ -891,10 +969,10 @@ public:
      }
      
      //Builds RC CAN.
-     void Build_Input_RC(int p_Cell = 0)
+     void Build_Input_RC(int p_Cell = 0, int p_Build_Style = 0)
      {
           gather_CAN_Input(0, p_Cell);
-          CAN.RC();
+          CAN.RC(p_Build_Style);
           if (CAN.Treetop == NULL){ tbl_Treetops.add_Int(Current_Input, 0); return; }
           tbl_Treetops.add_Int(Current_Input, (CAN.Treetop->NID.U + 1));
      }
@@ -1563,43 +1641,47 @@ public:
 	 //Outputs the nodes graphically.
 	 void output_Nodes_GUI(olc::PixelGameEngine* pge)
 	 {
-		 Nodes.output_Nodes_GUI(pge);
+         return Nodes.output_Nodes_GUI(pge);
 	 }
      
-     void X_Offset_Less(int p_Increment)
+     int X_Offset_Less(int p_Increment)
      {
-         Nodes.X_Offset_Less(p_Increment);
+         return Nodes.X_Offset_Less(p_Increment);
      }
-     void X_Offset_More(int p_Increment)
+     int X_Offset_More(int p_Increment)
      {
-         Nodes.X_Offset_More(p_Increment);
+         return Nodes.X_Offset_More(p_Increment);
      }
-     void Y_Offset_Less(int p_Increment)
+     int Y_Offset_Less(int p_Increment)
      {
-         Nodes.Y_Offset_Less(p_Increment);
+         return Nodes.Y_Offset_Less(p_Increment);
      }
-     void Y_Offset_More(int p_Increment)
+     int Y_Offset_More(int p_Increment)
      {
-         Nodes.Y_Offset_More(p_Increment);
-     }
-
-     void X_Padd_Less(int p_Increment)
-     {
-         Nodes.X_Padd_Less(p_Increment);
-     }
-     void X_Padd_More(int p_Increment)
-     {
-         Nodes.X_Padd_More(p_Increment);
-     }
-     void Y_Padd_Less(int p_Increment)
-     {
-         Nodes.Y_Padd_Less(p_Increment);
-     }
-     void Y_Padd_More(int p_Increment)
-     {
-         Nodes.Y_Padd_More(p_Increment);
+         return Nodes.Y_Offset_More(p_Increment);
      }
 
+     int X_Padd_Less(int p_Increment)
+     {
+         return Nodes.X_Padd_Less(p_Increment);
+     }
+     int X_Padd_More(int p_Increment)
+     {
+         return Nodes.X_Padd_More(p_Increment);
+     }
+     int Y_Padd_Less(int p_Increment)
+     {
+         return Nodes.Y_Padd_Less(p_Increment);
+     }
+     int Y_Padd_More(int p_Increment)
+     {
+         return Nodes.Y_Padd_More(p_Increment);
+     }
+
+     void center_Screen()
+     {
+         Nodes.center_Screen();
+     }
 
      ////==--------------+
      //==--   INTERFACE  
