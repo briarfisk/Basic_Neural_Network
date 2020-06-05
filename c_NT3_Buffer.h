@@ -1,3 +1,9 @@
+#ifndef c_NT3_Buffer_H
+#define c_NT3_Buffer_H
+
+
+
+
 //This is the linked list for the buffer.
 class c_NT3_Linked_List
 {
@@ -177,7 +183,7 @@ private:
           //For handling the current search.
           u_Data_3 tmp_Data;
           u_Data_3 tmp_SData;
-          
+
           c_NT3_Buffer_Tree()
           {
                Root = NULL;
@@ -471,6 +477,9 @@ public:
                {
                     Treetops.new_LL((tmp_LL->NID), (tmp_LL->Charge.I));
                }
+
+               tmp_LL->NID->output_GUI(1);
+
                tmp_LL = tmp_LL->Next;
           }
      }
@@ -1890,3 +1899,6 @@ public:
      }
 };
 */
+
+
+#endif // !c_NT3_Buffer_H
