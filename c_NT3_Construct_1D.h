@@ -1661,7 +1661,19 @@ public:
          return Nodes.Y_Offset_More(p_Increment);
      }
 
+<<<<<<< Updated upstream
      int X_Padd_Less(int p_Increment)
+=======
+	 int X_Set(int p_X)
+	 {
+		 return Nodes.X_Set(p_X);
+	 }
+	 int Y_Set(int p_Y)
+	 {
+		 return Nodes.Y_Set(p_Y);
+	 }
+	 int X_Padd_Less(int p_Increment)
+>>>>>>> Stashed changes
      {
          return Nodes.X_Padd_Less(p_Increment);
      }
@@ -1773,6 +1785,8 @@ public:
      {
           if (p_Name == "NO_NAME"){ p_Name = Name; }
           
+		  system("DIR");
+
           //The save file.
           std::ofstream SF;
           

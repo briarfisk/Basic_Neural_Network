@@ -486,13 +486,30 @@ public:
           std::cout << "\n Saving Nodes.........." << CNID.U << ".Found.....";
           
           *p_SF << "\nNode_Count " << CNID.U;
-          
+
+		  u_Data_3 Node_Counter;
+		  Node_Counter.U = 1;
+		  int tmp_Div = int(CNID.U) / 1000;
+		  if (tmp_Div <= 1) { tmp_Div = 1; }
+
+		  int tmp_X = 0;
+		  int tmp_Y = 0;
+		  tmp_X = get_Console_Cursor_X();
+		  tmp_Y = get_Console_Cursor_Y();
+
           c_NT3_Base_Node_1D * tmp_Node = Root;
           
           if ((tmp_Node == NULL) && (CNID.U > 0)){ ostr(0, 12, "\n\n ERROR IN SAVING, NODES FOUND BUT ROOT IS NULL!!!"); }
           
           while(tmp_Node != NULL)
           {
+			  if (!(Node_Counter.U % tmp_Div))
+			  {
+				  xy(tmp_X, tmp_Y);
+				  std::cout << ((double(Node_Counter.U) / double(CNID.U)) * 100) << "%      ";
+			  }
+			  Node_Counter.U++;
+
                if (tmp_Node->Type == 0)
                {
                     *p_SF << "\nSN " << tmp_Node->get_State();
@@ -545,9 +562,7 @@ public:
           //Create the file.
           std::cout << "\n\n Node Network Loading..........";
           if (p_LF->is_open()){ std::cout << "Authorized"; } else { std::cout << "Denied"; return; }
-          
-          u_Data_3 Node_Count;
-          Node_Count.U = 0;
+
           
           //The new scaffold.
           c_NT3_Base_Node_1D ** tmp_NScaffold = NULL;
@@ -575,9 +590,18 @@ public:
           int tmp_X = 0;
           int tmp_Y = 0;
 
+<<<<<<< Updated upstream
+=======
+          int tmp_Node_X = 0;
+          int tmp_Node_Y = 0;
+
+>>>>>>> Stashed changes
           int tmp_Axon_Count_L = 0;
           int tmp_Axon_Count_R = 0;
-          
+
+		  u_Data_3 Node_Count;
+		  Node_Count.U = 0;
+
           *p_LF >> tmp_Node_Type;
           tmp_Node_Type = "";
           *p_LF >> Node_Count.U;
@@ -613,15 +637,20 @@ public:
                {
                     *p_LF >> tmp_State.I;
                     //*std::cout << " St " << tmp_State.I;
-                    
-                    *p_LF >> tmp_NID.I;
+
+					*p_LF >> tmp_NID.I;
                     //*std::cout << " NID " << tmp_NID.I;
-                    
+
+					*p_LF >> tmp_Tier;
+					//*std::cout << " tmp_Tier " << tmp_Tier;
+
                     //Get the axon counts.
                     *p_LF >> tmp_Axon_Count_L;
                     *p_LF >> tmp_Axon_Count_R;
+					//*std::cout << " tmp_Axon_Count_L " << tmp_Axon_Count_L;
+					//*std::cout << " tmp_Axon_Count_R " << tmp_Axon_Count_R;
                     
-                    tmp_Node = get_State_Node(tmp_State, tmp_Axon_Count_L, tmp_Axon_Count_R);
+                    tmp_Node = get_State_Node(tmp_State, tmp_Tier, tmp_Axon_Count_L, tmp_Axon_Count_R);
                     
                     //Add the tmp_Node to the tmp_NScaffold
                     tmp_NScaffold[tmp_NID.I] = tmp_Node;
@@ -629,12 +658,17 @@ public:
                }
                if (tmp_Node_Type == "N")
                {
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
+				   *p_LF >> tmp_NID.I;
+				   //*std::cout << " NID " << tmp_NID.I;
+
+				   *p_LF >> tmp_Tier;
+				   //*std::cout << " tmp_Tier " << tmp_Tier;
                     
                     //Get the axon counts.
                     *p_LF >> tmp_Axon_Count_L;
                     *p_LF >> tmp_Axon_Count_R;
+					//*std::cout << " tmp_Axon_Count_L " << tmp_Axon_Count_L;
+					//*std::cout << " tmp_Axon_Count_R " << tmp_Axon_Count_R;
                     
                     *p_LF >> tmp_L.I;
                     //*std::cout << " L " << tmp_L.I;
@@ -643,7 +677,7 @@ public:
                     //*std::cout << " R " << tmp_R.I;
                     
                     //Create the node and add it to the state tree with the NID as an identifier.
-                    tmp_Node = new_Node(tmp_Axon_Count_L, tmp_Axon_Count_R);
+                    tmp_Node = new_Node(tmp_Tier, tmp_Axon_Count_L, tmp_Axon_Count_R);
                     
                     //Add the tmp_Node to the tmp_NScaffold
                     tmp_NScaffold[tmp_NID.I] = tmp_Node;
@@ -657,15 +691,20 @@ public:
                {
                     *p_LF >> tmp_State.I;
                     //*std::cout << " St " << tmp_State.I;
-                    
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
+
+					*p_LF >> tmp_NID.I;
+					//*std::cout << " NID " << tmp_NID.I;
+
+					*p_LF >> tmp_Tier;
+					//*std::cout << " tmp_Tier " << tmp_Tier;
                     
                     //Get the axon counts.
                     *p_LF >> tmp_Axon_Count_L;
                     *p_LF >> tmp_Axon_Count_R;
+					//*std::cout << " tmp_Axon_Count_L " << tmp_Axon_Count_L;
+					//*std::cout << " tmp_Axon_Count_R " << tmp_Axon_Count_R;
                     
-                    tmp_Node = get_State_Node(tmp_State, tmp_Axon_Count_L, tmp_Axon_Count_R);
+                    tmp_Node = get_State_Node(tmp_State, tmp_Tier, tmp_Axon_Count_L, tmp_Axon_Count_R);
                     convert_To_Treetop_Node(tmp_Node);
                     
                     //Add the tmp_Node to the tmp_NScaffold
@@ -674,12 +713,17 @@ public:
                }
                if (tmp_Node_Type == "TN")
                {
-                    *p_LF >> tmp_NID.I;
-                    //*std::cout << " NID " << tmp_NID.I;
+				   *p_LF >> tmp_NID.I;
+				   //*std::cout << " NID " << tmp_NID.I;
+
+				   *p_LF >> tmp_Tier;
+				   //*std::cout << " tmp_Tier " << tmp_Tier;
                     
                     //Get the axon counts.
                     *p_LF >> tmp_Axon_Count_L;
                     *p_LF >> tmp_Axon_Count_R;
+					//*std::cout << " tmp_Axon_Count_L " << tmp_Axon_Count_L;
+					//*std::cout << " tmp_Axon_Count_R " << tmp_Axon_Count_R;
                     
                     *p_LF >> tmp_L.I;
                     //*std::cout << " L " << tmp_L.I;
@@ -688,7 +732,7 @@ public:
                     //*std::cout << " R " << tmp_R.I;
                     
                     //Create the node and add it to the state tree with the NID as an identifier.
-                    tmp_Node = new_Node(tmp_Axon_Count_L, tmp_Axon_Count_R);
+                    tmp_Node = new_Node(tmp_Tier, tmp_Axon_Count_L, tmp_Axon_Count_R);
                     convert_To_Treetop_Node(tmp_Node);
                     
                     //Add the tmp_Node to the tmp_NScaffold
@@ -702,16 +746,29 @@ public:
                     
                     //*std::cout << " tmp_Node->NID->" << tmp_Node->NID.I;
                }
-               
-               *p_LF >> tmp_RC_Lvl.F;
+
+			   *p_LF >> tmp_RC_Lvl.F;
+
+			   *p_LF >> tmp_Node_X;
+
+			   *p_LF >> tmp_Node_Y;
+
+			   tmp_Node->X = tmp_Node_X;
+			   tmp_Node->Y = tmp_Node_Y;
+
                //*std::cout << " tmp_RC_Lvl " << tmp_RC_Lvl.F;
+               //*std::cout << " tmp_X " << tmp_X;
+               //*std::cout << " tmp_X " << tmp_Y;
                
                tmp_Node->RC_Lvl = tmp_RC_Lvl.F;
+
+			   tmp_Node->output_GUI();
                
                //*std::cout << " " << tmp_Node << " ";
                //tmp_Node->bp_O();
           }
-          xy(tmp_X, tmp_Y); std::cout << "100.00%      ";
+          xy(tmp_X, tmp_Y); 
+		  std::cout << "100.00%      ";
           std::cout << "\n Resetting Scaffold.....";
           
           //Derete the tmp_NScaffold
@@ -809,6 +866,7 @@ public:
          ostr(0, 15, "\n\n Total Node Count: "); std::cout << tmp_Count;
      }
 
+<<<<<<< Updated upstream
 
      int X_Offset_Less(int p_Increment)
      {
@@ -829,6 +887,37 @@ public:
 
 
      int X_Padd_Less(int p_Increment)
+=======
+
+     int X_Offset_Less(int p_Increment)
+     {
+         return XY_Kernel.X_Offset_Less(p_Increment);
+     }
+     int X_Offset_More(int p_Increment)
+     {
+         return XY_Kernel.X_Offset_More(p_Increment);
+     }
+     int Y_Offset_Less(int p_Increment)
+     {
+         return XY_Kernel.Y_Offset_Less(p_Increment);
+     }
+     int Y_Offset_More(int p_Increment)
+     {
+         return XY_Kernel.Y_Offset_More(p_Increment);
+     }
+
+
+     int X_Set(int p_X)
+     {
+         return XY_Kernel.X_Set(p_X);
+     }     
+	 int Y_Set(int p_Y)
+     {
+         return XY_Kernel.Y_Set(p_Y);
+     }
+
+	 int X_Padd_Less(int p_Increment)
+>>>>>>> Stashed changes
      {
          return XY_Kernel.X_Padd_Less(p_Increment);
      }

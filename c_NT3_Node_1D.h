@@ -92,7 +92,20 @@ public:
     }
 
 
+<<<<<<< Updated upstream
     int X_Padd_Less(int p_Increment)
+=======
+    int X_Set(int p_X)
+    {
+        return X_Padd = p_X;
+    }
+    int Y_Set(int p_Y)
+    {
+        return Y_Padd = p_Y;
+    }
+
+	int X_Padd_Less(int p_Increment)
+>>>>>>> Stashed changes
     {
         return X_Padd -= p_Increment;
     }
@@ -584,8 +597,13 @@ public:
          //std::cout << "\n char((tmp_RC_Lvl: " << tmp_RC_Lvl << " / p_HRC: " << p_HRC << "): " << (tmp_RC_Lvl / p_HRC) << " * 250): " << unsigned int(char((get_RC_Lvl() / p_HRC) * 250));
 
          tmp_Pixel[0].r = 255;
+<<<<<<< Updated upstream
          tmp_Pixel[0].g = 255;
          tmp_Pixel[0].b = 255;
+=======
+         tmp_Pixel[0].g = 0;
+         tmp_Pixel[0].b = 0;
+>>>>>>> Stashed changes
 
          tmp_Pixel[1].r = 0;
          tmp_Pixel[1].g = 255;
@@ -605,7 +623,11 @@ public:
                  tmp_X[1] = ((Dendrite_L->X * p_X_Padd) + p_X_Offset_Dend);
                  tmp_Y[1] = ((Dendrite_L->Y * p_Y_Padd) + p_Y_Offset);
 
+<<<<<<< Updated upstream
                  if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[1]); }
+=======
+                 if (p_Color_Scheme == 0) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], tmp_Pixel[0]); }
+>>>>>>> Stashed changes
                  if (p_Color_Scheme == 1) { pge->DrawLine(tmp_X[0], tmp_Y[0], tmp_X[1], tmp_Y[1], olc::GREEN); }
              }
              if (Dendrite_R != NULL)
@@ -685,12 +707,21 @@ public:
          Current_Charge += p_Charge;
 
          if (Type == 2 || Type == 3)
+<<<<<<< Updated upstream
          {
              //std::cout << "\n Current_Charge: " << Current_Charge;
              //bp_O();
          }
          else
          {
+=======
+         {
+             //std::cout << "\n Current_Charge: " << Current_Charge;
+             //bp_O();
+         }
+         else
+         {
+>>>>>>> Stashed changes
              if (Current_Charge > p_APT)
              {
                  for (int cou_A = 0; cou_A < Axon_Count_L; cou_A++)
